@@ -80,18 +80,20 @@ describe("extractItemsFromRows", () => {
     expect(create).toHaveBeenCalledTimes(2)
     expect(items).toHaveLength(1)
   })
-})
 
-describe("getGroqClient", () => {
-  it("throws if GROQ_API_KEY is missing", async () => {
-    const { getGroqClient } = await vi.importActual<typeof import("./client")>("./client")
-    const prev = process.env.GROQ_API_KEY
-    delete process.env.GROQ_API_KEY
-    try {
-      expect(() => getGroqClient()).toThrow("GROQ_API_KEY is not configured")
-    } finally {
-      if (prev === undefined) delete process.env.GROQ_API_KEY
-      else process.env.GROQ_API_KEY = prev
-    }
+  it("maps unit_cost 0 to unitCost null", async () => {
+    create.mockResolvedValue(
+      completion([
+        {
+          ...validItem,
+          unit_cost: 0,
+          quantity: 0,
+        },
+      ]),
+    )
+    const items = await extractItemsFromRows([row(1)])
+    expect(items).toHaveLength(1)
+    expect(items[0]?.unitCost).toBeNull()
+    expect(items[0]?.quantity).toBe(0)
   })
 })

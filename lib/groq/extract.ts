@@ -51,7 +51,7 @@ async function extractChunk(
       partName: item.part_name,
       originalSpec: item.original_spec,
       quantity: item.quantity,
-      unitCost: item.unit_cost,
+      unitCost: item.unit_cost === 0 ? null : item.unit_cost,
       supplier: item.supplier,
       material: item.material,
       category: item.category,
