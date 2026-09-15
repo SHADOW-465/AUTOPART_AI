@@ -26,6 +26,22 @@ begin
 end;
 $$;
 
+create or replace function public.prevent_profile_privilege_change()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'UPDATE' then
+    if new.tenant_id is distinct from old.tenant_id or new.role is distinct from old.role then
+      if auth.role() <> 'service_role' then
+        raise exception 'Cannot change tenant_id or role';
+      end if;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Tenants
 -- ---------------------------------------------------------------------------
@@ -65,6 +81,10 @@ create index profiles_tenant_id_idx on public.profiles (tenant_id);
 create trigger profiles_set_updated_at
 before update on public.profiles
 for each row execute procedure public.set_updated_at();
+
+create trigger profiles_freeze_tenant_role
+before update on public.profiles
+for each row execute procedure public.prevent_profile_privilege_change();
 
 -- Security-definer lookup so profiles tenant-wide SELECT does not recurse.
 create or replace function public.current_tenant_id()
@@ -355,18 +375,14 @@ for select
 to authenticated
 using (tenant_id = public.current_tenant_id());
 
-create policy profiles_insert_self
-on public.profiles
-for insert
-to authenticated
-with check (id = auth.uid());
+-- No authenticated INSERT: profiles are created by service role on invite accept (Task 10).
 
 create policy profiles_update_self
 on public.profiles
 for update
 to authenticated
-using (id = auth.uid())
-with check (id = auth.uid());
+using (id = auth.uid() and tenant_id = public.current_tenant_id())
+with check (id = auth.uid() and tenant_id = public.current_tenant_id());
 
 create policy tenants_select_own
 on public.tenants
