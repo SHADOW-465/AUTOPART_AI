@@ -1,16 +1,14 @@
 const RATE_LIMIT = "AI rate limit, wait a minute and retry."
 const NOT_CONFIGURED = "AI is not configured."
+const ALLOWED = new Set([
+  RATE_LIMIT,
+  NOT_CONFIGURED,
+  "Empty validation response",
+  "Empty RFQ response",
+])
 
 export function mapAiActionError(error: unknown): string {
   const message = error instanceof Error ? error.message : ""
-  if (message === RATE_LIMIT || message.includes("rate limit")) return RATE_LIMIT
-  if (
-    message === NOT_CONFIGURED ||
-    message.includes("GROQ_API_KEY") ||
-    message.includes("not configured")
-  ) {
-    return NOT_CONFIGURED
-  }
-  if (message && !message.trim().startsWith("{") && message.length < 200) return message
+  if (ALLOWED.has(message)) return message
   return "AI request failed."
 }
