@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache"
 import { logAudit } from "@/lib/audit/log"
 import { canAccept } from "@/lib/auth/roles"
 import { requireUser } from "@/lib/auth/session"
-import { statusesAfterAccept } from "@/lib/boms/accept"
 import { processBom } from "@/lib/boms/process"
 import { computeBomTotals } from "@/lib/boms/totals"
 import type { Bom, BomItem, PartAlternative } from "@/lib/db/types"
@@ -31,31 +30,12 @@ export async function acceptAlternativeAction(
   }
 
   const alternative = alt as PartAlternative
-  const { data: siblings, error: sibError } = await supabase
-    .from("part_alternatives")
-    .select("id")
-    .eq("bom_item_id", alternative.bom_item_id)
-    .eq("tenant_id", profile.tenant_id)
-
-  if (sibError || !siblings) {
-    return { error: "Could not load alternatives" }
-  }
-
-  const planned = statusesAfterAccept(
-    siblings.map((row) => row.id as string),
-    alternativeId,
-  )
-
-  for (const [id, status] of Object.entries(planned)) {
-    const { error } = await supabase
-      .from("part_alternatives")
-      .update({ status })
-      .eq("id", id)
-      .eq("tenant_id", profile.tenant_id)
-    if (error) {
-      console.error("alternative status update failed", error)
-      return { error: "Could not update alternative" }
-    }
+  const { error: acceptError } = await supabase.rpc("accept_part_alternative", {
+    p_alternative_id: alternativeId,
+  })
+  if (acceptError) {
+    console.error("alternative accept rpc failed", acceptError)
+    return { error: "Could not update alternative" }
   }
 
   const { data: item, error: itemError } = await supabase

@@ -63,6 +63,7 @@ export type ProcessBomDb = {
   ) => Promise<void>
   loadCatalog: () => Promise<StandardsCatalog>
   loadSupplierPrices: (standardSpecId: string) => Promise<CatalogPriceOffer[]>
+  deleteBomItems: (bomId: string) => Promise<void>
   insertBomItem: (item: InsertBomItemInput) => Promise<{ id: string }>
   insertPartAlternative: (alt: InsertPartAlternativeInput) => Promise<void>
 }
@@ -94,6 +95,7 @@ export async function processBom(
 
   try {
     await db.setBomStatus(bomId, tenantId, "EXTRACTING", { errorMessage: null })
+    await db.deleteBomItems(bomId)
 
     const ext = extensionOf(filename)
     if (ext === "xls") {
@@ -321,6 +323,10 @@ export async function createSupabaseProcessDb(): Promise<ProcessBomDb> {
           leadTimeDays: supplier?.average_lead_time_days ?? null,
         }
       })
+    },
+    async deleteBomItems(bomId) {
+      const { error } = await supabase.from("bom_items").delete().eq("bom_id", bomId)
+      if (error) throw new Error(error.message)
     },
     async insertBomItem(item) {
       const { data, error } = await supabase

@@ -111,7 +111,19 @@ function createFakeDb() {
     async loadSupplierPrices(standardSpecId) {
       return prices[standardSpecId] ?? []
     },
+    async deleteBomItems(bomId) {
+      const remaining = items.filter((row) => row.bomId !== bomId)
+      const removedIds = new Set(items.filter((row) => row.bomId === bomId).map((row) => row.id))
+      items.length = 0
+      items.push(...remaining)
+      const keptAlts = alts.filter((alt) => !removedIds.has(alt.bomItemId))
+      alts.length = 0
+      alts.push(...keptAlts)
+    },
     async insertBomItem(item) {
+      if (items.some((row) => row.bomId === item.bomId && row.lineNumber === item.lineNumber)) {
+        throw new Error("unique violation: bom_id, line_number")
+      }
       const id = `item-${items.length + 1}`
       items.push({ ...item, id })
       return { id }
@@ -161,6 +173,20 @@ describe("processBom", () => {
     expect(custom.partName).toBe("CUSTOM BRACKET")
     expect(custom.matchStatus).toBe("NEEDS_REVIEW")
     expect(fake.alts.filter((a) => a.bomItemId === custom.id)).toHaveLength(0)
+  })
+
+  it("reprocess is idempotent: one item per line_number", async () => {
+    const fake = createFakeDb()
+    const deps = {
+      db: fake.db,
+      extractItemsFromRows: mockExtract,
+    }
+    await processBom("bom-1", "tenant-1", fixtureCsvWithCustom(), "text/csv", "messy.csv", deps)
+    await processBom("bom-1", "tenant-1", fixtureCsvWithCustom(), "text/csv", "messy.csv", deps)
+
+    expect(fake.items).toHaveLength(3)
+    const lineNumbers = fake.items.map((row) => row.lineNumber)
+    expect(new Set(lineNumbers).size).toBe(lineNumbers.length)
   })
 
   it("fails .xls with export message", async () => {
