@@ -6,7 +6,7 @@ vi.mock("groq-sdk", () => ({
   default: GroqMock,
 }))
 
-import { getGroqClient } from "./client"
+import { getGroqClient, withRateLimitRetry } from "./client"
 
 describe("getGroqClient", () => {
   it("throws if GROQ_API_KEY is missing", () => {
@@ -34,5 +34,19 @@ describe("getGroqClient", () => {
       if (prev === undefined) delete process.env.GROQ_API_KEY
       else process.env.GROQ_API_KEY = prev
     }
+  })
+})
+
+describe("withRateLimitRetry", () => {
+  it("maps 429 to the rate-limit copy", async () => {
+    await expect(
+      withRateLimitRetry(() => Promise.reject(Object.assign(new Error("raw groq"), { status: 429 })), 0),
+    ).rejects.toThrow("AI rate limit, wait a minute and retry.")
+  })
+
+  it("maps 401 to not configured", async () => {
+    await expect(
+      withRateLimitRetry(() => Promise.reject(Object.assign(new Error("{json}"), { status: 401 })), 0),
+    ).rejects.toThrow("AI is not configured.")
   })
 })

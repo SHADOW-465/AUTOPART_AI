@@ -2,15 +2,23 @@
 
 import { useState } from "react"
 import { acceptAlternativeAction, rejectAlternativeAction } from "@/lib/actions/alternatives"
-import type { PartAlternative } from "@/lib/db/types"
+import { RfqPanel } from "@/components/seion/rfq-panel"
+import { ValidationPanel } from "@/components/seion/validation-panel"
+import type { PartAlternative, TechnicalValidation } from "@/lib/db/types"
 import { formatInr } from "@/components/seion/bom-table"
 
 export function AlternativeCard({
   alternative,
   canAccept,
+  canValidate,
+  canDraftRfq,
+  latestValidation,
 }: {
   alternative: PartAlternative
   canAccept: boolean
+  canValidate: boolean
+  canDraftRfq: boolean
+  latestValidation: TechnicalValidation | null
 }) {
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -80,6 +88,12 @@ export function AlternativeCard({
         </div>
       ) : null}
       {error ? <p className="mt-2 text-xs font-medium text-brand-red">{error}</p> : null}
+      <ValidationPanel
+        alternativeId={alternative.id}
+        canValidate={canValidate}
+        latest={latestValidation}
+      />
+      <RfqPanel alternativeId={alternative.id} canDraftRfq={canDraftRfq} />
     </div>
   )
 }

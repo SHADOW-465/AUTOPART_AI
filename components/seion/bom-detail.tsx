@@ -3,16 +3,22 @@
 import { useMemo, useState } from "react"
 import { AlternativeCard } from "@/components/seion/alternative-card"
 import { BomTable } from "@/components/seion/bom-table"
-import type { BomItem, PartAlternative } from "@/lib/db/types"
+import type { BomItem, PartAlternative, TechnicalValidation } from "@/lib/db/types"
 
 export function BomDetail({
   items,
   alternatives,
+  validationsByAlt,
   canAccept,
+  canValidate,
+  canDraftRfq,
 }: {
   items: BomItem[]
   alternatives: PartAlternative[]
+  validationsByAlt: Record<string, TechnicalValidation>
   canAccept: boolean
+  canValidate: boolean
+  canDraftRfq: boolean
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id ?? null)
   const selected = items.find((item) => item.id === selectedId) ?? null
@@ -40,7 +46,14 @@ export function BomDetail({
           <p className="text-sm text-brand-text-secondary">No alternatives listed.</p>
         ) : (
           alts.map((alt) => (
-            <AlternativeCard key={alt.id} alternative={alt} canAccept={canAccept} />
+            <AlternativeCard
+              key={alt.id}
+              alternative={alt}
+              canAccept={canAccept}
+              canValidate={canValidate}
+              canDraftRfq={canDraftRfq}
+              latestValidation={validationsByAlt[alt.id] ?? null}
+            />
           ))
         )}
       </aside>

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation"
 import { BomDetail } from "@/components/seion/bom-detail"
 import { formatInr } from "@/components/seion/bom-table"
-import { canAccept } from "@/lib/auth/roles"
+import { canAccept, canDraftRfq, canValidate } from "@/lib/auth/roles"
 import { requireUser } from "@/lib/auth/session"
-import type { Bom, BomItem, PartAlternative } from "@/lib/db/types"
+import type { Bom, BomItem, PartAlternative, TechnicalValidation } from "@/lib/db/types"
 import { createServerClient } from "@/lib/supabase/server"
 
 export default async function BomDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -40,6 +40,22 @@ export default async function BomDetailPage({ params }: { params: Promise<{ id: 
       .in("bom_item_id", itemIds)
       .order("rank_order", { ascending: true })
     alternatives = (alts ?? []) as PartAlternative[]
+  }
+
+  const validationsByAlt: Record<string, TechnicalValidation> = {}
+  const altIds = alternatives.map((a) => a.id)
+  if (altIds.length > 0) {
+    const { data: vals } = await supabase
+      .from("technical_validations")
+      .select("*")
+      .eq("tenant_id", profile.tenant_id)
+      .in("alternative_id", altIds)
+      .order("validated_at", { ascending: false })
+    for (const row of (vals ?? []) as TechnicalValidation[]) {
+      if (!validationsByAlt[row.alternative_id]) {
+        validationsByAlt[row.alternative_id] = row
+      }
+    }
   }
 
   return (
@@ -79,7 +95,10 @@ export default async function BomDetailPage({ params }: { params: Promise<{ id: 
       <BomDetail
         items={itemRows}
         alternatives={alternatives}
+        validationsByAlt={validationsByAlt}
         canAccept={canAccept(profile.role)}
+        canValidate={canValidate(profile.role)}
+        canDraftRfq={canDraftRfq(profile.role)}
       />
     </div>
   )
