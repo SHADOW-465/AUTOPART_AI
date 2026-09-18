@@ -4,7 +4,7 @@ import type { RawBomRow } from "./types"
 
 export async function parseXlsx(buffer: ArrayBuffer): Promise<RawBomRow[]> {
   const workbook = new ExcelJS.Workbook()
-  await workbook.xlsx.load(Buffer.from(buffer))
+  await workbook.xlsx.load(Buffer.from(buffer) as unknown as Parameters<typeof workbook.xlsx.load>[0])
   const sheet = workbook.worksheets[0]
   if (!sheet) return []
 

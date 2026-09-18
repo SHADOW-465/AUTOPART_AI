@@ -5,7 +5,7 @@ import { logAudit } from "@/lib/audit/log"
 import type { Invite } from "@/lib/db/types"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createServerClient } from "@/lib/supabase/server"
-import { INVITE_INVALID_MESSAGE } from "@/lib/actions/invites"
+import { INVITE_INVALID_MESSAGE } from "@/lib/actions/invite-messages"
 
 const LOGIN_ERROR = "Invalid email or password"
 const MIN_PASSWORD_LENGTH = 8

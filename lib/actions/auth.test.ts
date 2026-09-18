@@ -32,7 +32,7 @@ vi.mock("@/lib/auth/session", () => ({
 }))
 
 import { acceptInviteAction, loginAction } from "./auth"
-import { INVITE_INVALID_MESSAGE } from "./invites"
+import { INVITE_INVALID_MESSAGE } from "./invite-messages"
 
 const openInvite = {
   id: "invite-1",

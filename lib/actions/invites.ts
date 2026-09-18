@@ -8,8 +8,6 @@ import type { Invite } from "@/lib/db/types"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createServerClient } from "@/lib/supabase/server"
 
-export const INVITE_INVALID_MESSAGE = "Ask your Plant Admin to send a new invite"
-
 const ROLES: Role[] = ["plant_admin", "procurement_engineer", "quality_manager"]
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const INVITE_TTL_MS = 72 * 60 * 60 * 1000

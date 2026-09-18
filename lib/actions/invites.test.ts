@@ -19,7 +19,8 @@ vi.mock("@/lib/audit/log", () => ({ logAudit }))
 vi.mock("@/lib/supabase/server", () => ({ createServerClient }))
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient }))
 
-import { createInviteAction, getInviteForToken, INVITE_INVALID_MESSAGE } from "./invites"
+import { INVITE_INVALID_MESSAGE } from "./invite-messages"
+import { createInviteAction, getInviteForToken } from "./invites"
 
 const session = {
   user: { id: "admin-1" },
