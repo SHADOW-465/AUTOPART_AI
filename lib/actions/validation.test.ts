@@ -45,7 +45,16 @@ const item = {
   bom_id: "bom-1",
   tenant_id: "tenant-1",
   original_spec: "DIN 912",
-  canonical_spec_key: "din-912",
+  canonical_spec_key: "DIN912|M6X20|8.8",
+}
+
+const specRow = {
+  id: "din-912",
+  body: "DIN",
+  code: "DIN 912",
+  part_family: "hex_socket_cap_screw",
+  canonical_key: "DIN912",
+  mechanical: { tensile_mpa_min: 800 },
 }
 
 function chain(result: { data: unknown; error: unknown }) {
@@ -56,6 +65,18 @@ function chain(result: { data: unknown; error: unknown }) {
   self.maybeSingle = async () => result
   self.insert = async () => ({ error: null })
   return self
+}
+
+function specsTable(data: unknown) {
+  return {
+    select: () => ({
+      eq: () => ({
+        maybeSingle: async () => ({ data, error: null }),
+      }),
+      then: (resolve: (value: { data: unknown; error: null }) => unknown) =>
+        resolve({ data: Array.isArray(data) ? data : [data], error: null }),
+    }),
+  }
 }
 
 describe("runValidationAction", () => {
@@ -71,7 +92,7 @@ describe("runValidationAction", () => {
       from: (table: string) => {
         if (table === "part_alternatives") return chain({ data: alt, error: null })
         if (table === "bom_items") return chain({ data: item, error: null })
-        if (table === "standard_specs") return chain({ data: { mechanical: { tensile_mpa_min: 800 } }, error: null })
+        if (table === "standard_specs") return specsTable(specRow)
         if (table === "technical_validations") return chain({ data: null, error: null })
         throw new Error(table)
       },
@@ -86,7 +107,7 @@ describe("runValidationAction", () => {
       from: (table: string) => {
         if (table === "part_alternatives") return chain({ data: alt, error: null })
         if (table === "bom_items") return chain({ data: item, error: null })
-        if (table === "standard_specs") return chain({ data: { mechanical: {} }, error: null })
+        if (table === "standard_specs") return specsTable({ ...specRow, mechanical: {} })
         throw new Error(table)
       },
     })
@@ -101,7 +122,7 @@ describe("runValidationAction", () => {
       from: (table: string) => {
         if (table === "part_alternatives") return chain({ data: alt, error: null })
         if (table === "bom_items") return chain({ data: item, error: null })
-        if (table === "standard_specs") return chain({ data: { mechanical: { tensile_mpa_min: 800 } }, error: null })
+        if (table === "standard_specs") return specsTable(specRow)
         if (table === "technical_validations") return { insert }
         throw new Error(table)
       },

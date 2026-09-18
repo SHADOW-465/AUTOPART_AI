@@ -198,6 +198,7 @@ describe("acceptInviteAction", () => {
       data: { users: [{ id: "user-invited", email: "new@example.com" }] },
       error: null,
     })
+    profilesMaybeSingle.mockResolvedValue({ data: null, error: null })
     profilesInsert.mockResolvedValue({ error: { code: "23505", message: "duplicate key" } })
 
     await expect(acceptInviteAction("token-1", "Priya Nair", "password1")).rejects.toThrow(
@@ -213,5 +214,24 @@ describe("acceptInviteAction", () => {
       email: "new@example.com",
       password: "password1",
     })
+  })
+
+  it("does not overwrite password when the email already has a profile", async () => {
+    createUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: "A user with this email address has already been registered", status: 422 },
+    })
+    listUsers.mockResolvedValue({
+      data: { users: [{ id: "user-existing", email: "new@example.com" }] },
+      error: null,
+    })
+    profilesMaybeSingle.mockResolvedValue({ data: { id: "user-existing" }, error: null })
+
+    await expect(acceptInviteAction("token-1", "Priya Nair", "password1")).resolves.toEqual({
+      error: "This email already has an account. Ask your Plant Admin to send a new invite.",
+    })
+    expect(updateUserById).not.toHaveBeenCalled()
+    expect(profilesInsert).not.toHaveBeenCalled()
+    expect(redirect).not.toHaveBeenCalled()
   })
 })

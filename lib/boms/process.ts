@@ -1,3 +1,4 @@
+import { mapAiActionError } from "@/lib/actions/ai-errors"
 import { computeBomTotals } from "@/lib/boms/totals"
 import type { BomStatus, MatchStatus } from "@/lib/db/types"
 import { extractItemsFromRows as defaultExtract } from "@/lib/groq/extract"
@@ -167,13 +168,21 @@ export async function processBom(
       totalSavingsPct: totals.totalSavingsPct,
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : "BOM processing failed"
+    const mapped = mapAiActionError(err)
+    const raw = err instanceof Error ? err.message : "BOM processing failed"
+    const known =
+      raw === XLS_UNSUPPORTED_MESSAGE ||
+      raw === STEP_UNSUPPORTED_MESSAGE ||
+      raw === PDF_NO_TEXT_MESSAGE ||
+      raw === "Unsupported file type"
+    const message = known ? raw : mapped
     try {
       await fail(db, bomId, tenantId, message)
     } catch (statusErr) {
       console.error("failed to mark BOM FAILED", statusErr)
     }
-    throw err
+    if (known) throw err
+    throw new Error(message)
   }
 }
 

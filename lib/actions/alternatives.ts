@@ -1,8 +1,9 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { mapAiActionError } from "@/lib/actions/ai-errors"
 import { logAudit } from "@/lib/audit/log"
-import { canAccept } from "@/lib/auth/roles"
+import { canAccept, canUpload } from "@/lib/auth/roles"
 import { requireUser } from "@/lib/auth/session"
 import { processBom } from "@/lib/boms/process"
 import { computeBomTotals } from "@/lib/boms/totals"
@@ -126,6 +127,9 @@ export async function rejectAlternativeAction(
 
 export async function retryBomAction(bomId: string): Promise<{ ok: true } | { error: string }> {
   const { profile } = await requireUser()
+  if (!canUpload(profile.role)) {
+    return { error: "Forbidden" }
+  }
   const supabase = await createServerClient()
 
   const { data: bom, error } = await supabase
@@ -163,8 +167,7 @@ export async function retryBomAction(bomId: string): Promise<{ ok: true } | { er
   try {
     await processBom(bomId, profile.tenant_id, buffer, mime, filename)
   } catch (err) {
-    const message = err instanceof Error ? err.message : "BOM processing failed"
-    return { error: message }
+    return { error: mapAiActionError(err) }
   }
 
   revalidatePath(`/app/boms/${bomId}`)

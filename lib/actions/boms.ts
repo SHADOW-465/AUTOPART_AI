@@ -1,6 +1,7 @@
 "use server"
 
 import { redirect } from "next/navigation"
+import { mapAiActionError } from "@/lib/actions/ai-errors"
 import { logAudit } from "@/lib/audit/log"
 import { canUpload } from "@/lib/auth/roles"
 import { requireUser } from "@/lib/auth/session"
@@ -104,8 +105,7 @@ export async function uploadBomAction(
   try {
     await processBom(bomId, profile.tenant_id, buffer, mime, filename)
   } catch (err) {
-    const message = err instanceof Error ? err.message : "BOM processing failed"
-    return { error: message }
+    return { error: mapAiActionError(err) }
   }
 
   redirect(`/app/boms/${bomId}`)

@@ -14,7 +14,7 @@ Copy `.env.example` to `.env.local` and fill in:
 | `GROQ_API_KEY` | Groq API key for extraction, validation, and RFQ |
 | `SEED_ADMIN_EMAIL` | Optional seed plant-admin email |
 
-Groq models used: `openai/gpt-oss-20b` (fast extraction) and `openai/gpt-oss-120b` (validation / RFQ). Get a key at [console.groq.com](https://console.groq.com).
+Groq models used: `openai/gpt-oss-20b` (extraction / RFQ) and `openai/gpt-oss-120b` (validation). Get a key at [console.groq.com](https://console.groq.com).
 
 ## Database
 
@@ -26,6 +26,7 @@ supabase db push
 # or apply files in order:
 #   supabase/migrations/20260915120000_init.sql
 #   supabase/migrations/20260915130000_one_accepted_alternative.sql
+#   supabase/migrations/20260915140000_role_write_gates.sql
 
 # seed catalog / demo plant
 #   supabase/seed.sql

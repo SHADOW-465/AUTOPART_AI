@@ -1,4 +1,4 @@
-export type KpiBom = { id: string }
+export type KpiBom = { id: string; created_at: string }
 
 export type KpiAcceptedAlt = {
   is_ais_compliant: boolean
@@ -38,9 +38,14 @@ export function computeKpis(
     }
   }
 
+  const bomsProcessed = boms.filter((bom) => {
+    const d = new Date(bom.created_at)
+    return d.getFullYear() === year && d.getMonth() === month
+  }).length
+
   return {
     monthlySavings,
-    bomsProcessed: boms.length,
+    bomsProcessed,
     complianceRate,
     empty,
   }

@@ -3,11 +3,14 @@ import { mapHeader } from "./headers"
 
 describe("mapHeader", () => {
   it.each([
+    ["Part", "part_number"],
     ["Part No", "part_number"],
+    ["P/N", "part_number"],
     ["OEM P/N", "part_number"],
     ["Description", "part_name"],
     ["Nomenclature", "part_name"],
-    ["Matl.", "material"],
+    ["Matl.", "original_spec"],
+    ["Material spec", "original_spec"],
     ["Spec", "original_spec"],
     ["Qty Req.", "quantity"],
     ["Unit Cost", "unit_cost"],

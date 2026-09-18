@@ -3,7 +3,7 @@ import { computeKpis, lineSavings } from "./kpis"
 
 describe("computeKpis", () => {
   it("returns empty state when no accepted alternatives", () => {
-    const result = computeKpis([{ id: "b1" }], [])
+    const result = computeKpis([{ id: "b1", created_at: "2026-09-01T00:00:00Z" }], [], new Date("2026-09-15T12:00:00Z"))
     expect(result.empty).toBe(true)
     expect(result.monthlySavings).toBe(0)
     expect(result.bomsProcessed).toBe(1)
@@ -13,7 +13,10 @@ describe("computeKpis", () => {
   it("returns 50% compliance when one of two accepted alts is AIS compliant", () => {
     const now = new Date("2026-09-15T12:00:00Z")
     const result = computeKpis(
-      [{ id: "b1" }, { id: "b2" }],
+      [
+        { id: "b1", created_at: "2026-09-01T00:00:00Z" },
+        { id: "b2", created_at: "2026-09-10T00:00:00Z" },
+      ],
       [
         {
           is_ais_compliant: true,
@@ -61,6 +64,19 @@ describe("computeKpis", () => {
       now,
     )
     expect(result.monthlySavings).toBe(3 * (5 - 1))
+  })
+
+  it("counts BOMs processed only for the current calendar month", () => {
+    const now = new Date("2026-09-15T12:00:00Z")
+    const result = computeKpis(
+      [
+        { id: "old", created_at: "2026-08-15T12:00:00Z" },
+        { id: "new", created_at: "2026-09-15T12:00:00Z" },
+      ],
+      [],
+      now,
+    )
+    expect(result.bomsProcessed).toBe(1)
   })
 
   it("treats missing costs as zero savings for that line", () => {

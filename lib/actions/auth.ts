@@ -83,6 +83,17 @@ export async function acceptInviteAction(
       return { error: "Could not accept invite" }
     }
 
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("id", existingId)
+      .maybeSingle()
+    if (existingProfile) {
+      return {
+        error: "This email already has an account. Ask your Plant Admin to send a new invite.",
+      }
+    }
+
     const { error: updateError } = await admin.auth.admin.updateUserById(existingId, {
       password,
       email_confirm: true,

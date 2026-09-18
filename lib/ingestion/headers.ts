@@ -1,7 +1,7 @@
 import type { BomColumn } from "./types"
 
 const SYNONYMS: Record<string, BomColumn> = {
-  part: "part_name",
+  part: "part_number",
   partno: "part_number",
   partnumber: "part_number",
   pn: "part_number",
@@ -12,7 +12,7 @@ const SYNONYMS: Record<string, BomColumn> = {
   spec: "original_spec",
   standard: "original_spec",
   materialspec: "original_spec",
-  matl: "material",
+  matl: "original_spec",
   material: "material",
   qty: "quantity",
   qtyreq: "quantity",

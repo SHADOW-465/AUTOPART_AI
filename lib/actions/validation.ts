@@ -8,6 +8,8 @@ import { VALIDATE_MODEL } from "@/lib/groq/client"
 import { validateAlternative, type ValidationReport } from "@/lib/groq/validate"
 import { createServerClient } from "@/lib/supabase/server"
 import { mapAiActionError } from "@/lib/actions/ai-errors"
+import { findSpecByKey } from "@/lib/matching/lookup"
+import type { StandardSpec } from "@/lib/matching/types"
 
 export async function runValidationAction(
   alternativeId: string,
@@ -46,12 +48,20 @@ export async function runValidationAction(
   let alternativeCatalog: unknown = {}
 
   if (bomItem.canonical_spec_key) {
-    const { data: originalSpec } = await supabase
-      .from("standard_specs")
-      .select("*")
-      .eq("canonical_key", bomItem.canonical_spec_key)
-      .maybeSingle()
-    if (originalSpec) originalCatalog = (originalSpec as StandardSpecRow).mechanical
+    const { data: specs } = await supabase.from("standard_specs").select("*")
+    const rows = (specs ?? []) as StandardSpecRow[]
+    const catalogSpecs = rows.map((row) => ({
+      id: row.id,
+      body: row.body as StandardSpec["body"],
+      code: row.code,
+      partFamily: row.part_family,
+      canonicalKey: row.canonical_key,
+    }))
+    const originalSpec = findSpecByKey(bomItem.canonical_spec_key, catalogSpecs)
+    if (originalSpec) {
+      const row = rows.find((s) => s.id === originalSpec.id)
+      if (row) originalCatalog = row.mechanical
+    }
   }
 
   if (alternative.standard_spec_id) {

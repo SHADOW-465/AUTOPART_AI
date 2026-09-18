@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { UploadDropzone } from "@/components/seion/upload-dropzone"
+import { canUpload } from "@/lib/auth/roles"
 import { requireUser } from "@/lib/auth/session"
 import { computeKpis, formatInr, type KpiAcceptedAlt } from "@/lib/boms/kpis"
 import type { Bom } from "@/lib/db/types"
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
   const boms = (bomRows ?? []) as Bom[]
   const acceptedAlts = (altRows ?? []).map(mapAcceptedAlt)
   const kpis = computeKpis(
-    boms.map((b) => ({ id: b.id })),
+    boms.map((b) => ({ id: b.id, created_at: b.created_at })),
     acceptedAlts,
   )
   const recent = boms.slice(0, 5)
@@ -34,7 +35,7 @@ export default async function DashboardPage() {
         <KpiCard label="Compliance rate" value={`${Math.round(kpis.complianceRate * 100)}%`} />
         <KpiCard label="Accepted alternatives" value={kpis.empty ? "None" : String(acceptedAlts.length)} />
       </div>
-      <UploadDropzone />
+      {canUpload(profile.role) ? <UploadDropzone /> : null}
       <div>
         <h2 className="mb-3 text-lg font-bold text-brand-text-primary">Recent BOMs</h2>
         {recent.length === 0 ? (

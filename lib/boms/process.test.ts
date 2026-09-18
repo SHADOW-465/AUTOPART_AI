@@ -221,4 +221,18 @@ describe("processBom", () => {
     expect(fake.boms["bom-1"]?.status).toBe("FAILED")
     expect(fake.boms["bom-1"]?.errorMessage).toBe(PDF_NO_TEXT_MESSAGE)
   })
+
+  it("stores a mapped AI error instead of raw SDK JSON", async () => {
+    const fake = createFakeDb()
+    await expect(
+      processBom("bom-1", "tenant-1", fixtureCsvWithCustom(), "text/csv", "messy.csv", {
+        db: fake.db,
+        extractItemsFromRows: async () => {
+          throw new Error('400 {"error":{"message":"bad"}}')
+        },
+      }),
+    ).rejects.toThrow("AI request failed.")
+    expect(fake.boms["bom-1"]?.status).toBe("FAILED")
+    expect(fake.boms["bom-1"]?.errorMessage).toBe("AI request failed.")
+  })
 })
