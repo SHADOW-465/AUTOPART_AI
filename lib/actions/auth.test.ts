@@ -8,8 +8,11 @@ const redirect = vi.hoisted(() =>
 const signInWithPassword = vi.hoisted(() => vi.fn())
 const createUser = vi.hoisted(() => vi.fn())
 const deleteUser = vi.hoisted(() => vi.fn())
+const updateUserById = vi.hoisted(() => vi.fn())
+const listUsers = vi.hoisted(() => vi.fn())
 const invitesMaybeSingle = vi.hoisted(() => vi.fn())
 const profilesInsert = vi.hoisted(() => vi.fn())
+const profilesMaybeSingle = vi.hoisted(() => vi.fn())
 const invitesUpdateEq = vi.hoisted(() => vi.fn())
 const createServerClient = vi.hoisted(() => vi.fn())
 const createAdminClient = vi.hoisted(() => vi.fn())
@@ -49,7 +52,7 @@ function mockClients() {
     auth: { signInWithPassword },
   })
   createAdminClient.mockReturnValue({
-    auth: { admin: { createUser, deleteUser } },
+    auth: { admin: { createUser, deleteUser, updateUserById, listUsers } },
     from: (table: string) => {
       if (table === "invites") {
         return {
@@ -57,12 +60,21 @@ function mockClients() {
             eq: () => ({ maybeSingle: invitesMaybeSingle }),
           }),
           update: (payload: unknown) => ({
-            eq: (column: string, value: string) => invitesUpdateEq(payload, column, value),
+            eq: (column: string, value: string) => ({
+              is: () => ({
+                select: () => invitesUpdateEq(payload, column, value),
+              }),
+            }),
           }),
         }
       }
       if (table === "profiles") {
-        return { insert: profilesInsert }
+        return {
+          insert: profilesInsert,
+          select: () => ({
+            eq: () => ({ maybeSingle: profilesMaybeSingle }),
+          }),
+        }
       }
       throw new Error(`unexpected table ${table}`)
     },
@@ -108,7 +120,10 @@ describe("acceptInviteAction", () => {
     invitesMaybeSingle.mockResolvedValue({ data: openInvite, error: null })
     createUser.mockResolvedValue({ data: { user: { id: "user-new" } }, error: null })
     profilesInsert.mockResolvedValue({ error: null })
-    invitesUpdateEq.mockResolvedValue({ error: null })
+    profilesMaybeSingle.mockResolvedValue({ data: { id: "user-new" }, error: null })
+    invitesUpdateEq.mockResolvedValue({ data: [{ id: "invite-1" }], error: null })
+    updateUserById.mockResolvedValue({ error: null })
+    listUsers.mockResolvedValue({ data: { users: [] }, error: null })
     signInWithPassword.mockResolvedValue({ error: null })
   })
 
@@ -163,7 +178,7 @@ describe("acceptInviteAction", () => {
     expect(createUser).not.toHaveBeenCalled()
   })
 
-  it("deletes the auth user if profile insert fails", async () => {
+  it("deletes the auth user if profile insert fails for a newly created user", async () => {
     profilesInsert.mockResolvedValue({ error: { message: "rls" } })
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     await expect(acceptInviteAction("token-1", "Priya Nair", "password1")).resolves.toEqual({
@@ -172,5 +187,31 @@ describe("acceptInviteAction", () => {
     expect(deleteUser).toHaveBeenCalledWith("user-new")
     expect(redirect).not.toHaveBeenCalled()
     consoleError.mockRestore()
+  })
+
+  it("resumes when createUser reports a duplicate email", async () => {
+    createUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: "A user with this email address has already been registered", status: 422 },
+    })
+    listUsers.mockResolvedValue({
+      data: { users: [{ id: "user-invited", email: "new@example.com" }] },
+      error: null,
+    })
+    profilesInsert.mockResolvedValue({ error: { code: "23505", message: "duplicate key" } })
+
+    await expect(acceptInviteAction("token-1", "Priya Nair", "password1")).rejects.toThrow(
+      "NEXT_REDIRECT:/app",
+    )
+    expect(updateUserById).toHaveBeenCalledWith("user-invited", {
+      password: "password1",
+      email_confirm: true,
+      user_metadata: { full_name: "Priya Nair" },
+    })
+    expect(deleteUser).not.toHaveBeenCalled()
+    expect(signInWithPassword).toHaveBeenCalledWith({
+      email: "new@example.com",
+      password: "password1",
+    })
   })
 })
