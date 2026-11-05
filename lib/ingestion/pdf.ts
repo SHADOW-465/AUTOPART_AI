@@ -1,26 +1,36 @@
-import { PDFParse } from "pdf-parse"
 import { mapHeader } from "./headers"
+import { installPdfGlobals } from "./pdf-env"
 import type { RawBomRow } from "./types"
 
-/**
- * pdf.js normally loads its worker from a file next to its own module, which breaks once the server
- * code is bundled (and on serverless hosts, where that file isn't shipped). Registering the worker
- * module on globalThis makes pdf.js run it on the main thread; the static import is bundled like
- * any other dependency.
- */
 /** pdf-parse inserts "-- 1 of 3 --" between pages. */
 const PAGE_MARKER = /^--\s*\d+\s+of\s+\d+\s*--$/i
 
-async function ensurePdfWorker(): Promise<void> {
-  const g = globalThis as { pdfjsWorker?: unknown }
-  if (g.pdfjsWorker) return
-  g.pdfjsWorker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs")
+type PdfParseModule = typeof import("pdf-parse")
+let pdfParse: Promise<PdfParseModule> | null = null
+
+/**
+ * Loads pdf.js only when a PDF is actually parsed, so the rest of the app never depends on it.
+ * Before loading: install the geometry globals pdf.js needs (see pdf-env.ts), and register its
+ * worker on globalThis so it runs on the main thread instead of loading pdf.worker.mjs from disk,
+ * a file that isn't present once the server code is bundled.
+ */
+function loadPdfParse(): Promise<PdfParseModule> {
+  pdfParse ??= (async () => {
+    installPdfGlobals()
+    const g = globalThis as { pdfjsWorker?: unknown }
+    g.pdfjsWorker ??= await import("pdfjs-dist/legacy/build/pdf.worker.mjs")
+    return import("pdf-parse")
+  })()
+  pdfParse.catch(() => {
+    pdfParse = null
+  })
+  return pdfParse
 }
 
 export async function parsePdf(
   buffer: ArrayBuffer,
 ): Promise<{ ok: true; rows: RawBomRow[] } | { ok: false; code: "NO_TEXT_LAYER" }> {
-  await ensurePdfWorker()
+  const { PDFParse } = await loadPdfParse()
   const parser = new PDFParse({ data: buffer })
   let text = ""
   try {

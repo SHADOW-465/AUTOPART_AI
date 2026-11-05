@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { parsePdf } from "./pdf"
+import { AffineDOMMatrix } from "./pdf-env"
 
 // Minimal one-page PDF with a text layer containing a CSV-style BOM table.
 function buildPdf(lines: string[]): ArrayBuffer {
@@ -32,5 +33,7 @@ describe("parsePdf (real pdf.js)", () => {
     if (!result.ok) return
     expect(result.rows).toHaveLength(2)
     expect(Object.values(result.rows[0].cells)).toContain("ISO 4017 M8x20 8.8")
+    // Parsed with our pure-JS DOMMatrix, not the native canvas package serverless hosts lack.
+    expect((globalThis as { DOMMatrix?: unknown }).DOMMatrix).toBe(AffineDOMMatrix)
   })
 })
