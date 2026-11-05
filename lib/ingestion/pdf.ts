@@ -2,9 +2,25 @@ import { PDFParse } from "pdf-parse"
 import { mapHeader } from "./headers"
 import type { RawBomRow } from "./types"
 
+/**
+ * pdf.js normally loads its worker from a file next to its own module, which breaks once the server
+ * code is bundled (and on serverless hosts, where that file isn't shipped). Registering the worker
+ * module on globalThis makes pdf.js run it on the main thread; the static import is bundled like
+ * any other dependency.
+ */
+/** pdf-parse inserts "-- 1 of 3 --" between pages. */
+const PAGE_MARKER = /^--\s*\d+\s+of\s+\d+\s*--$/i
+
+async function ensurePdfWorker(): Promise<void> {
+  const g = globalThis as { pdfjsWorker?: unknown }
+  if (g.pdfjsWorker) return
+  g.pdfjsWorker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs")
+}
+
 export async function parsePdf(
   buffer: ArrayBuffer,
 ): Promise<{ ok: true; rows: RawBomRow[] } | { ok: false; code: "NO_TEXT_LAYER" }> {
+  await ensurePdfWorker()
   const parser = new PDFParse({ data: buffer })
   let text = ""
   try {
@@ -40,7 +56,7 @@ export async function parsePdf(
   const rows: RawBomRow[] = []
   for (let i = headerIdx + 1; i < lines.length; i++) {
     const line = lines[i].trim()
-    if (!line) continue
+    if (!line || PAGE_MARKER.test(line)) continue
     const values = splitLine(line, delimiter)
     const cells: Record<string, string> = {}
     let any = false

@@ -18,6 +18,8 @@ export type ValidationInput = {
   to: SpecForValidation | null
   /** The spec text as written on the customer BOM, used for coating keywords. */
   originalSpecText: string
+  /** Property class written on the drawing (e.g. "10.9"), if any. */
+  drawingGrade?: string | null
 }
 
 export type ValidationResult = {
@@ -76,6 +78,8 @@ export function validateSwap(input: ValidationInput): ValidationResult {
   inferior ||= classCheck.lower
   superior ||= classCheck.higher
 
+  if (input.drawingGrade) checks.push(drawingGradeCheck(input.drawingGrade, to))
+
   for (const [key, label] of [
     ["tensile_mpa_min", "Tensile strength (min)"],
     ["yield_mpa_min", "Yield strength (min)"],
@@ -117,6 +121,30 @@ export function validateSwap(input: ValidationInput): ValidationResult {
       : "REQUIRES_MODIFICATION"
 
   return { recommendation, material, dimensional, checks }
+}
+
+function drawingGradeCheck(grade: string, to: SpecForValidation): Check {
+  const label = "Grade on drawing"
+  const recorded = to.mechanical.property_class
+  if (!recorded) {
+    return { id: "drawing_grade", label, status: "warn", detail: `Drawing calls for class ${grade}; no class is recorded for ${to.code}. Specify ${grade} on the order and confirm on the MTC.` }
+  }
+  const required = Number.parseFloat(grade)
+  const available = Number.parseFloat(recorded)
+  if (Number.isFinite(required) && Number.isFinite(available) && required > available) {
+    return {
+      id: "drawing_grade",
+      label,
+      status: "warn",
+      detail: `Drawing calls for class ${grade} but the library record for ${to.code} is ${recorded}. Order the IS part in class ${grade} and confirm on the mill test certificate.`,
+    }
+  }
+  return pass("drawing_grade", label, `Class ${grade} on the drawing is covered by ${to.code} (${recorded}).`)
+}
+
+/** Property class from a canonical key such as "ISO4017|M10X30|10.9". */
+export function gradeFromCanonical(key: string | null | undefined): string | null {
+  return key?.split("|").find((part) => /^\d{1,2}\.\d$/.test(part)) ?? null
 }
 
 function compareNumericText(id: string, label: string, from?: string, to?: string) {

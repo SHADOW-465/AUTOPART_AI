@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { validateSwap, type SpecForValidation } from "./rules"
+import { gradeFromCanonical, validateSwap, type SpecForValidation } from "./rules"
 
 const din912: SpecForValidation = {
   code: "DIN 912",
@@ -74,5 +74,25 @@ describe("validateSwap", () => {
     const result = validateSwap({ equivalence: null, from: null, to: null, originalSpecText: "CUSTOM" })
     expect(result.recommendation).toBe("NOT_RECOMMENDED")
     expect(result.checks).toHaveLength(1)
+  })
+
+  it("warns when the drawing grade is above the IS record", () => {
+    const result = validateSwap({ equivalence: "EQUIVALENT", from: din912, to: is1367, originalSpecText: "", drawingGrade: "10.9" })
+    expect(statusOf(result, "drawing_grade")).toBe("warn")
+    expect(result.checks.find((c) => c.id === "drawing_grade")?.detail).toContain("Order the IS part in class 10.9")
+    expect(result.recommendation).toBe("REQUIRES_TESTING")
+  })
+
+  it("passes when the drawing grade is covered", () => {
+    const result = validateSwap({ equivalence: "EQUIVALENT", from: din912, to: is1367, originalSpecText: "", drawingGrade: "8.8" })
+    expect(statusOf(result, "drawing_grade")).toBe("pass")
+  })
+})
+
+describe("gradeFromCanonical", () => {
+  it("reads the property class segment", () => {
+    expect(gradeFromCanonical("ISO4017|M10X30|10.9")).toBe("10.9")
+    expect(gradeFromCanonical("DIN934")).toBeNull()
+    expect(gradeFromCanonical(null)).toBeNull()
   })
 })

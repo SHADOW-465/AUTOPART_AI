@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { buildBomCsv, exportFilename } from "@/lib/boms/export"
 import { loadBomDetail } from "@/lib/boms/view"
-import { getDb } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
 
 export const dynamic = "force-dynamic"
 

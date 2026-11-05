@@ -12,11 +12,12 @@ import { getSettings } from "@/lib/repo/settings"
 import { loadCatalog } from "@/lib/repo/standards"
 import { rematchItem } from "./rematch"
 
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+/** 4 MB keeps uploads under the 4.5 MB request cap of serverless hosts such as Vercel. */
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
 
 export const MESSAGES = {
   empty: "The file is empty.",
-  tooLarge: "File must be 10 MB or smaller.",
+  tooLarge: "File must be 4 MB or smaller. Remove images or extra sheets, or export just the BOM table as CSV.",
   xls: "Old .xls files aren't supported. Save the sheet as .xlsx or CSV and upload again.",
   cad: "CAD/STEP files aren't supported. Export the BOM table as .xlsx or CSV.",
   unsupported: "Upload an .xlsx, .csv or text-based .pdf BOM.",
@@ -97,23 +98,7 @@ export async function processBomFile(db: Db, bomId: string, deps: ImportDeps = {
     const rows = await parseRows(classified.kind, source.file)
     const { items, usedAi } = await extractItems(rows, deps)
 
-    transaction(db, () => {
-      deleteItemsForBom(db, bomId)
-      const catalog = loadCatalog(db)
-      for (const item of items) {
-        const inserted = getItem(db, insertItem(db, bomId, item))!
-        rematchItem(db, inserted, catalog)
-      }
-      const count = listItems(db, bomId).filter((i) => i.match_status === "MATCHED").length
-      setBomStatus(db, bomId, "ANALYZED")
-      logEvent(db, {
-        bom_id: bomId,
-        entity_type: "bom",
-        entity_id: bomId,
-        action: "bom.imported",
-        summary: `Imported ${items.length} lines from ${source.filename}${usedAi ? " (AI extraction)" : ""}; ${count} matched to Indian Standards.`,
-      })
-    })
+    storeItems(db, bomId, items, source.filename, usedAi)
     return { ok: true }
   } catch (error) {
     const message = error instanceof ImportError ? error.message : "Couldn't read this file. Check it opens in Excel and try again."
@@ -122,6 +107,49 @@ export async function processBomFile(db: Db, bomId: string, deps: ImportDeps = {
     logEvent(db, { bom_id: bomId, entity_type: "bom", entity_id: bomId, action: "bom.failed", summary: message })
     return { error: message }
   }
+}
+
+/** Replaces a BOM's lines with the given items, matches each, and marks the BOM ANALYZED. */
+export function storeItems(db: Db, bomId: string, items: NormalizedBomItem[], filename: string, usedAi = false): void {
+  transaction(db, () => {
+    deleteItemsForBom(db, bomId)
+    const catalog = loadCatalog(db)
+    for (const item of items) {
+      const inserted = getItem(db, insertItem(db, bomId, item))!
+      rematchItem(db, inserted, catalog)
+    }
+    const count = listItems(db, bomId).filter((i) => i.match_status === "MATCHED").length
+    setBomStatus(db, bomId, "ANALYZED")
+    logEvent(db, {
+      bom_id: bomId,
+      entity_type: "bom",
+      entity_id: bomId,
+      action: "bom.imported",
+      summary: `Imported ${items.length} lines from ${filename}${usedAi ? " (AI extraction)" : ""}; ${count} matched to Indian Standards.`,
+    })
+  })
+}
+
+/** Synchronous CSV import for built-in samples and demo data (no AI, no file-type detection). */
+export function importCsvText(
+  db: Db,
+  input: { filename: string; csv: string; title: string; customer_name?: string | null; vehicle_platform?: string | null; annual_volume: number },
+): string {
+  const { items } = normalizeRows(parseCsv(input.csv))
+  if (items.length === 0) throw new Error(`${input.filename}: no BOM lines found`)
+  return transaction(db, () => {
+    const bom = createBom(db, {
+      title: input.title,
+      filename: input.filename,
+      mime: "text/csv",
+      file: new TextEncoder().encode(input.csv),
+      annual_volume: input.annual_volume,
+      customer_name: input.customer_name,
+      vehicle_platform: input.vehicle_platform,
+    })
+    storeItems(db, bom.id, items, input.filename)
+    return bom.id
+  })
 }
 
 export type UploadInput = {

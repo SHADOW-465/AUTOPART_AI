@@ -6,7 +6,7 @@ import { BomActions, BomMetaForm } from "@/components/seion/bom-controls"
 import { BomWorkbench } from "@/components/seion/bom-workbench"
 import { buttonClass, Card, Stat } from "@/components/seion/ui"
 import { loadBomDetail } from "@/lib/boms/view"
-import { getDb } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
 import { date, dateTime, inr, inrShort, num, pct } from "@/lib/format"
 import { listSuppliers } from "@/lib/repo/suppliers"
 

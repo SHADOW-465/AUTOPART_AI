@@ -1,13 +1,13 @@
 "use server"
 
-import { readFile } from "node:fs/promises"
-import path from "node:path"
 import { redirect } from "next/navigation"
 import { importBom, processBomFile } from "@/lib/boms/import"
 import { rematchBom } from "@/lib/boms/rematch"
-import { getDb } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
+import { seedDemoData } from "@/lib/db/demo"
 import { logEvent } from "@/lib/repo/audit"
 import { deleteBom, getBom, updateBomMeta } from "@/lib/repo/boms"
+import { SAMPLE_BOM_CSV } from "@/lib/samples"
 import { optionalNumber, optionalText, refresh, text, toError, type ActionResult, type ActionState } from "./form"
 
 export async function uploadBomAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
@@ -34,11 +34,10 @@ export async function uploadBomAction(_prev: ActionState, fd: FormData): Promise
 export async function loadSampleBomAction(): Promise<ActionResult> {
   let bomId: string
   try {
-    const bytes = await readFile(path.join(process.cwd(), "public", "samples", "sample-bom.csv"))
     const result = await importBom(getDb(), {
       filename: "sample-bom.csv",
       mime: "text/csv",
-      bytes: new Uint8Array(bytes),
+      bytes: new TextEncoder().encode(SAMPLE_BOM_CSV),
       title: "Sample – compact SUV underbody kit",
       customer_name: "Sample OEM",
     })
@@ -111,4 +110,14 @@ export async function deleteBomAction(bomId: string): Promise<ActionResult> {
   }
   refresh()
   redirect("/boms")
+}
+
+export async function loadDemoDataAction(): Promise<ActionResult> {
+  try {
+    const { bomIds } = seedDemoData(getDb())
+    refresh()
+    return { ok: true, message: `Loaded ${bomIds.length} demo BOMs with decisions, approvals and RFQs.` }
+  } catch (error) {
+    return toError(error)
+  }
 }

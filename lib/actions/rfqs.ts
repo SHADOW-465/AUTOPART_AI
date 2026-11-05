@@ -1,6 +1,6 @@
 "use server"
 
-import { getDb } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
 import { changeRfqStatus, createRfqForAlternative, recordQuote } from "@/lib/rfq/service"
 import { optionalNumber, optionalText, refresh, requiredNumber, toError, type ActionResult, type ActionState } from "./form"
 

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs"
+import { SAMPLE_BOM_CSV } from "@/lib/samples"
 import { describe, expect, it } from "vitest"
 import { openDatabase } from "@/lib/db/client"
 import { acceptAlternative, setCustomerStatus } from "@/lib/repo/alternatives"
@@ -27,7 +27,7 @@ describe("csvCell", () => {
 describe("buildBomCsv", () => {
   it("exports one row per line with the proposal, validation and approval state", async () => {
     const db = openDatabase(":memory:")
-    const bytes = new Uint8Array(readFileSync("public/samples/sample-bom.csv"))
+    const bytes = new TextEncoder().encode(SAMPLE_BOM_CSV)
     const result = await importBom(db, { filename: "sample.csv", mime: "text/csv", bytes, annual_volume: 1000 })
     const bomId = (result as { bomId: string }).bomId
     const before = loadBomDetail(db, bomId)!

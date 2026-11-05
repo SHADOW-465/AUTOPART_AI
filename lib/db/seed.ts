@@ -126,10 +126,11 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   default_annual_volume: "10000",
 }
 
-export function seedIfEmpty(db: Db): void {
+/** Loads the starter catalog into an empty database. Returns true when it did (i.e. the database was new). */
+export function seedIfEmpty(db: Db): boolean {
   const specCount = (db.prepare("SELECT COUNT(*) AS n FROM standard_specs").get() as { n: number }).n
   const settingsCount = (db.prepare("SELECT COUNT(*) AS n FROM settings").get() as { n: number }).n
-  if (specCount > 0 || settingsCount > 0) return
+  if (specCount > 0 || settingsCount > 0) return false
 
   const now = new Date().toISOString()
   db.exec("BEGIN")
@@ -178,6 +179,7 @@ export function seedIfEmpty(db: Db): void {
       insertPrice.run(crypto.randomUUID(), supplierIds.get(supplier)!, specIds.get(key)!, cost, now)
     }
     db.exec("COMMIT")
+    return true
   } catch (error) {
     db.exec("ROLLBACK")
     throw error

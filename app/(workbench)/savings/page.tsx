@@ -3,7 +3,7 @@ import { CategorySavingsChart, Legend, MonthlySavingsChart } from "@/components/
 import { Card, EmptyState, PageHeader, Stat, tableClass, TableWrap, tdClass, thClass } from "@/components/seion/ui"
 import { savingsByCategory, savingsByMonth } from "@/lib/boms/savings"
 import { loadWorkspace } from "@/lib/boms/workspace"
-import { getDb } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
 import { inr, inrShort, monthLabel, num, savingsClass } from "@/lib/format"
 
 export const dynamic = "force-dynamic"

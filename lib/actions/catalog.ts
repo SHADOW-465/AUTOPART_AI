@@ -1,7 +1,7 @@
 "use server"
 
 import { redirect } from "next/navigation"
-import { getDb } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
 import { STANDARD_BODIES, type Equivalence, type MechanicalFields, type StandardBody } from "@/lib/db/types"
 import { saveSettings } from "@/lib/repo/settings"
 import { addEquivalence, addSpec, deleteEquivalence, deleteSpec } from "@/lib/repo/standards"

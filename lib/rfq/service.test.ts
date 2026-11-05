@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs"
+import { SAMPLE_BOM_CSV } from "@/lib/samples"
 import { beforeEach, describe, expect, it } from "vitest"
 import { importBom } from "@/lib/boms/import"
 import { loadBomDetail } from "@/lib/boms/view"
@@ -14,7 +14,7 @@ let bomId: string
 beforeEach(async () => {
   db = openDatabase(":memory:")
   saveSettings(db, { company_name: "Acme Auto", contact_name: "R. Kumar" })
-  const bytes = new Uint8Array(readFileSync("public/samples/sample-bom.csv"))
+  const bytes = new TextEncoder().encode(SAMPLE_BOM_CSV)
   const result = await importBom(db, { filename: "sample.csv", mime: "text/csv", bytes, annual_volume: 500 })
   bomId = (result as { bomId: string }).bomId
 })

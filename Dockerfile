@@ -12,7 +12,6 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 DATABASE_PATH=/app/data/seion.
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
 COPY --from=build /app/next.config.mjs ./
 RUN mkdir -p /app/data && chown -R node:node /app/data
 USER node

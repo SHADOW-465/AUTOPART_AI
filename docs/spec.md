@@ -53,7 +53,7 @@ Migrations are an ordered array in `lib/db/schema.ts`, and `PRAGMA user_version`
 ## 3. Pipelines
 
 ### 3.1 Import (`lib/boms/import.ts`)
-1. Validate the file: ≤ 10 MB; ext ∈ {xlsx, csv, pdf}. `.xls` → "Save as .xlsx or CSV". `.step/.stp` → "CAD files not supported". Insert the BOM (`PROCESSING`) with the file bytes stored as a BLOB.
+1. Validate the file: ≤ 4 MB (fits the 4.5 MB request cap on Vercel); ext ∈ {xlsx, csv, pdf}. `.xls` → "Save as .xlsx or CSV". `.step/.stp` → "CAD files not supported". Insert the BOM (`PROCESSING`) with the file bytes stored as a BLOB.
 2. **Parse rows** with the existing parsers (csv / xlsx / pdf text layer). A PDF with no text layer → FAILED "scanned PDF – export the table to Excel".
 3. **Normalize** (`lib/ingestion/normalize.ts`, deterministic):
    - Map headers via an extended synonym table (`part no`, `description`, `specification`, `std`, `qty/veh`, `unit price`, `rate (inr)`, `make`, `vendor`, `matl`, …).
@@ -175,5 +175,6 @@ Each returns `{ ok: true, … } | { error: string }`, validates its input (typed
 - Local: `pnpm install && pnpm dev` (or `pnpm build && pnpm start`). Data goes to `./data/seion.db` (gitignored).
 - Docker: `node:22-slim` image, `pnpm build`, `VOLUME /app/data`, `EXPOSE 3000`.
 - Backup: copy `data/seion.db` (or use `sqlite3 .backup`).
-- **Not suitable for serverless** (Vercel or Lambda) because the filesystem is ephemeral. Use a VM, plant PC or container host.
+- **Serverless (Vercel, Lambda, Netlify):** the project directory is read-only. With no `DATABASE_PATH`, the DB goes to `os.tmpdir()/seion/seion.db`, it is marked *ephemeral*, a banner is shown, and demo data is seeded into each fresh database (`SEION_DEMO_DATA` overrides). If the default `./data` turns out not to be writable on any host, the app falls back to the same temporary location instead of crashing. Data is per-instance and resets on restart, so this is a demo mode; production needs a persistent disk.
+- **Bundling:** sample CSVs are TypeScript modules served by `app/samples/[file]`, not `public/` files read at runtime. The pdf.js worker is preloaded on `globalThis.pdfjsWorker`, so PDF parsing doesn't depend on files beside the bundle. Server-action uploads allow 5 MB (`experimental.serverActions.bodySizeLimit`) and the app caps files at 4 MB.
 - No auth: deploy on a trusted network, or put an authenticating reverse proxy in front.

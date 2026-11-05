@@ -3,7 +3,7 @@ import { BomStatusBadge } from "@/components/seion/badges"
 import { Card, EmptyState, PageHeader, tableClass, TableWrap, tdClass, thClass } from "@/components/seion/ui"
 import { UploadPanel } from "@/components/seion/upload-panel"
 import { loadWorkspace } from "@/lib/boms/workspace"
-import { getDb } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
 import { date, inrShort, num, pct, savingsClass } from "@/lib/format"
 import { getSettings } from "@/lib/repo/settings"
 

@@ -8,6 +8,7 @@ import { getSettings } from "@/lib/repo/settings"
 import { getSpec } from "@/lib/repo/standards"
 import { getSupplier, upsertPrice } from "@/lib/repo/suppliers"
 import type { RfqStatus } from "@/lib/db/types"
+import { gradeFromCanonical } from "@/lib/validation/rules"
 import { buildRfq, rfqCode } from "./template"
 
 const COATING_NOTE = /zinc[\s-]*flake|geomet|dacromet|iso\s*10683/i
@@ -26,6 +27,7 @@ export function createRfqForAlternative(db: Db, alternativeId: string, supplierI
     if (!supplier) throw new Error("Supplier not found.")
     const spec = alt.standard_spec_id ? getSpec(db, alt.standard_spec_id) : null
 
+    const drawingGrade = gradeFromCanonical(item.canonical_spec_key)
     const code = rfqCode()
     const target = item.current_unit_cost ?? alt.unit_cost
     const { subject, body } = buildRfq({
@@ -34,7 +36,7 @@ export function createRfqForAlternative(db: Db, alternativeId: string, supplierI
       supplierContact: supplier.contact_name,
       isCode: alt.indian_standard_code,
       partFamily: spec?.part_family ?? null,
-      mechanical: spec?.mechanical ?? {},
+      mechanical: { ...(spec?.mechanical ?? {}), ...(drawingGrade ? { property_class: drawingGrade } : {}) },
       sourceSpec: item.original_spec,
       partName: item.part_name,
       partNumber: item.part_number,

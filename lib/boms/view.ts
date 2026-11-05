@@ -6,7 +6,7 @@ import { getBom, listItems } from "@/lib/repo/boms"
 import { listRfqs, type RfqView } from "@/lib/repo/rfqs"
 import { all } from "@/lib/repo/sql"
 import { getSpec } from "@/lib/repo/standards"
-import { validateSwap, type ValidationResult } from "@/lib/validation/rules"
+import { gradeFromCanonical, validateSwap, type ValidationResult } from "@/lib/validation/rules"
 import { lineDelta, summarizeBom, type BomSummary, type LineDelta } from "./savings"
 
 export type AlternativeLine = AlternativeView & { delta: LineDelta }
@@ -63,6 +63,7 @@ export function loadBomDetail(db: Db, bomId: string): BomDetail | null {
             from: { code: fromSpec.code, partFamily: fromSpec.part_family, mechanical: fromSpec.mechanical },
             to: { code: toSpec.code, partFamily: toSpec.part_family, mechanical: toSpec.mechanical },
             originalSpecText: [item.original_spec, item.part_name].filter(Boolean).join(" "),
+            drawingGrade: gradeFromCanonical(item.canonical_spec_key),
           })
         : null
     return {

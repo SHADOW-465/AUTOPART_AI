@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { RfqCard } from "@/components/seion/rfq-card"
 import { EmptyState, PageHeader } from "@/components/seion/ui"
-import { getDb } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
 import { listRfqs } from "@/lib/repo/rfqs"
 import { cn } from "@/lib/utils"
 

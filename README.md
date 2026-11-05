@@ -20,13 +20,15 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000 and click **Try the sample BOM**, or upload your own `.xlsx`, `.csv` or text-based `.pdf`. You can download a header template from the BOMs page.
+Open http://localhost:3000 and click **Try the sample BOM** or **Load demo data**, or upload your own `.xlsx`, `.csv` or text-based `.pdf` (up to 4 MB). You can download a header template from the BOMs page.
 
 On first run the app creates `data/seion.db` and seeds it with:
 - 39 standards and 29 equivalences (fasteners, sheet and alloy steels, coatings)
 - 6 sample suppliers with indicative prices
 
 These are all labelled **Seed**. Replace them with your own approved suppliers and plant-verified equivalences.
+
+To explore with realistic data, use **Settings → Load demo data**. It adds two demo BOMs with accepted, submitted and approved swaps, RFQs in every state, and three months of savings history.
 
 Node prints a one-line `ExperimentalWarning` for `node:sqlite`; it is harmless.
 
@@ -49,13 +51,15 @@ docker run -p 3000:3000 -v seion-data:/app/data seion-autopart
 
 | Environment variable | Purpose |
 | --- | --- |
-| `DATABASE_PATH` | SQLite file location (default `./data/seion.db`) |
+| `DATABASE_PATH` | SQLite file location (default `./data/seion.db`; `/tmp/seion/seion.db` on serverless hosts) |
+| `SEION_DEMO_DATA` | `1` / `0`: load the demo BOMs, decisions and RFQs into a new database. Default: on for serverless (temporary) storage, off otherwise |
 | `GROQ_API_KEY` | Optional. Enables AI extraction **only** for BOM files whose header row can't be recognised. Those rows are sent to Groq. |
 | `PORT` | HTTP port for `pnpm start` (default 3000) |
 
 **Deployment notes**
 - **No login.** The app is designed for a single plant on a trusted network. If you expose it, put an authenticating reverse proxy or a VPN in front.
-- **Use a persistent disk.** Serverless hosts with ephemeral filesystems (e.g. Vercel) will lose data; run it on a VM, a plant PC or a container host instead.
+- **Vercel / serverless = demo mode.** The project directory is read-only there, so the database goes to `/tmp` and demo data is loaded automatically. Uploading BOMs and every workflow work, but data resets whenever the instance restarts and isn't shared between instances; a banner says so. Uploads are capped at 4 MB to fit Vercel's request limit.
+- **For real use, use a persistent disk:** a VM, a plant PC or a container with a volume (or point `DATABASE_PATH` at one).
 - **Backup.** Copy `data/seion.db` while the app is stopped.
 
 ## Development

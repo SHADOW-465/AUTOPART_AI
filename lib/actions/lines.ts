@@ -1,7 +1,8 @@
 "use server"
 
 import { rematchItemById } from "@/lib/boms/rematch"
-import { getDb, transaction } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
+import { transaction } from "@/lib/db/client"
 import type { CustomerStatus } from "@/lib/db/types"
 import { CUSTOMER_STATUS_LABELS } from "@/lib/labels"
 import {

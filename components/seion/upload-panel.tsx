@@ -7,14 +7,28 @@ import { cn } from "@/lib/utils"
 import { ActionButton, FormMessage, SubmitButton } from "./client"
 import { buttonClass, Field, inputClass } from "./ui"
 
+const MAX_BYTES = 4 * 1024 * 1024
+
 export function UploadPanel({ defaultAnnualVolume, compact = false }: { defaultAnnualVolume: number; compact?: boolean }) {
-  const [state, formAction] = useActionState(uploadBomAction, null)
+  const [serverState, formAction] = useActionState(uploadBomAction, null)
+  const [localError, setLocalError] = useState<string | null>(null)
+  const state = localError ? { error: localError } : serverState
+  const pick = (file: File | undefined) => {
+    setFileName(file?.name ?? null)
+    setLocalError(file && file.size > MAX_BYTES ? "File must be 4 MB or smaller. Export just the BOM table as CSV or .xlsx." : null)
+  }
   const inputRef = useRef<HTMLInputElement>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form
+      action={formAction}
+      onSubmit={(e) => {
+        if (localError) e.preventDefault()
+      }}
+      className="space-y-3"
+    >
       <label
         htmlFor="bom-file"
         onDragOver={(e) => {
@@ -28,7 +42,7 @@ export function UploadPanel({ defaultAnnualVolume, compact = false }: { defaultA
           const files = e.dataTransfer.files
           if (files.length && inputRef.current) {
             inputRef.current.files = files
-            setFileName(files[0].name)
+            pick(files[0])
           }
         }}
         className={cn(
@@ -41,7 +55,7 @@ export function UploadPanel({ defaultAnnualVolume, compact = false }: { defaultA
         <span className="text-sm font-semibold text-brand-text-primary">
           {fileName ?? "Drop a BOM here or click to choose"}
         </span>
-        <span className="text-xs text-brand-text-secondary">.xlsx, .csv or text-based .pdf · up to 10 MB</span>
+        <span className="text-xs text-brand-text-secondary">.xlsx, .csv or text-based .pdf · up to 4 MB</span>
         <input
           ref={inputRef}
           id="bom-file"
@@ -50,7 +64,7 @@ export function UploadPanel({ defaultAnnualVolume, compact = false }: { defaultA
           required
           accept=".xlsx,.csv,.tsv,.txt,.pdf,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           className="sr-only"
-          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+          onChange={(e) => pick(e.target.files?.[0])}
         />
       </label>
       <div className="grid gap-3 sm:grid-cols-2">

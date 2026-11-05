@@ -2,7 +2,7 @@ import Link from "next/link"
 import { CertBadges, OriginBadge } from "@/components/seion/badges"
 import { SupplierForm } from "@/components/seion/supplier-forms"
 import { Card, EmptyState, PageHeader, tableClass, TableWrap, tdClass, thClass } from "@/components/seion/ui"
-import { getDb } from "@/lib/db/client"
+import { getDb } from "@/lib/db/app"
 import { num } from "@/lib/format"
 import { listSuppliers } from "@/lib/repo/suppliers"
 

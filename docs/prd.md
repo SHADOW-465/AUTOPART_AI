@@ -51,7 +51,7 @@ Single-plant deployment. No login (per product decision, §7). Each person enter
   - AC: The Settings page saves all fields. RFQ and proposal text use them. The app works with empty settings, using neutral defaults.
 
 ### 4.2 BOM intake
-- **US-2** I upload an `.xlsx`, `.csv` or text-based `.pdf` BOM up to 10 MB, and its lines are extracted without any AI key.
+- **US-2** I upload an `.xlsx`, `.csv` or text-based `.pdf` BOM up to 4 MB (under serverless request limits), and its lines are extracted without any AI key.
   - AC: Header synonyms are recognised (part no / description / spec / standard / qty / rate / supplier / material / category, …).
   - AC: Quantities and costs like `4 nos` or `₹1,250.50` are parsed.
   - AC: When there is no spec column, a DIN/ISO/IS/EN/JIS/SAE reference in the description is used as the spec.

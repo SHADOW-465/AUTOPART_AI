@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/seion/app-shell"
-import { getDb } from "@/lib/db/client"
+import { getDb, getStorageInfo } from "@/lib/db/app"
 import { countOpenRfqs } from "@/lib/repo/rfqs"
 import { getSettings } from "@/lib/repo/settings"
 
@@ -9,7 +9,12 @@ export default function WorkbenchLayout({ children }: { children: React.ReactNod
   const db = getDb()
   const settings = getSettings(db)
   return (
-    <AppShell companyName={settings.company_name} plantLocation={settings.plant_location} openRfqs={countOpenRfqs(db)}>
+    <AppShell
+      companyName={settings.company_name}
+      plantLocation={settings.plant_location}
+      openRfqs={countOpenRfqs(db)}
+      ephemeral={getStorageInfo().ephemeral}
+    >
       {children}
     </AppShell>
   )

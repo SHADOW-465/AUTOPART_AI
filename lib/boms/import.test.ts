@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs"
+import { SAMPLE_BOM_CSV } from "@/lib/samples"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { openDatabase, type Db } from "@/lib/db/client"
 import { acceptAlternative, listAlternativesForBom, listAlternativesForItem, setCustomerStatus } from "@/lib/repo/alternatives"
@@ -9,7 +9,7 @@ import { listSuppliers, upsertPrice } from "@/lib/repo/suppliers"
 import { classifyFile, importBom, MESSAGES } from "./import"
 import { rematchBom, rematchItemById } from "./rematch"
 
-const sample = new Uint8Array(readFileSync("public/samples/sample-bom.csv"))
+const sample = new TextEncoder().encode(SAMPLE_BOM_CSV)
 
 let db: Db
 beforeEach(() => {
@@ -98,7 +98,7 @@ describe("importBom", () => {
 
   it("rejects empty and oversized files before creating a BOM", async () => {
     expect(await importBom(db, { filename: "a.csv", mime: "", bytes: new Uint8Array() })).toEqual({ error: MESSAGES.empty })
-    expect(await importBom(db, { filename: "a.csv", mime: "", bytes: new Uint8Array(10 * 1024 * 1024 + 1) })).toEqual({
+    expect(await importBom(db, { filename: "a.csv", mime: "", bytes: new Uint8Array(4 * 1024 * 1024 + 1) })).toEqual({
       error: MESSAGES.tooLarge,
     })
   })

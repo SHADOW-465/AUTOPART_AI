@@ -7,11 +7,13 @@ export function AppShell({
   companyName,
   plantLocation,
   openRfqs,
+  ephemeral,
 }: {
   children: React.ReactNode
   companyName: string
   plantLocation: string
   openRfqs: number
+  ephemeral: boolean
 }) {
   return (
     <div className="flex h-screen overflow-hidden bg-brand-surface">
@@ -43,6 +45,12 @@ export function AppShell({
         <div className="md:hidden">
           <AppNav variant="bar" openRfqs={openRfqs} />
         </div>
+        {ephemeral ? (
+          <p role="note" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900 md:px-8">
+            <strong>Demo instance:</strong> data is kept in temporary server storage and resets when the server restarts. Uploading BOMs works for
+            testing; don&apos;t upload confidential drawings. <Link href="/settings" className="font-semibold underline">Details</Link>
+          </p>
+        ) : null}
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="mx-auto max-w-[1400px] space-y-6">{children}</div>
         </main>
