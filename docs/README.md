@@ -22,6 +22,7 @@ This directory provides comprehensive enterprise documentation across technical 
 
 | Document | Primary Audience | Description |
 | :--- | :--- | :--- |
+| [**Market Research & Validation**](./market-research.md) | Leadership, Product, Sales | Sourced market sizing, the BIS fastener QCO driver, competitors, unsupported claims, verdict, and validation plan. **Start here.** |
 | [**Product Strategy & Value Propositions**](./product-strategy.md) | Leadership, Product, Sales | Market analysis, Ideal Customer Profile (ICP), core value propositions, unit economics, ROI calculators, and monetization models. |
 | [**Enterprise System Architecture**](./architecture.md) | Architects, DevOps, Engineers | System component topology, C4 architectural diagrams, multimodal ingestion pipeline, Gemini AI multi-agent orchestration, and enterprise security/governance (SOC 2, ISO 27001). |
 | [**Standards Ontology & Domain Model**](./standards-and-domain-model.md) | Domain Experts, Backend Engineers | Comprehensive mapping matrix between DIN/ISO and Indian Standards (IS/ARAI/AIS), material property databases, entity-relationship schemas, and PPAP compliance checklists. |

@@ -1,5 +1,7 @@
 # Product Strategy & Value Propositions — SEION AutoPart AI
 
+> **Read [market-research.md](./market-research.md) first.** This document is an early pitch draft. Its savings, ROI, payback and market-size figures are **not validated** by customer data or current public sources. The market research corrects them and recommends repositioning around BIS / IS compliance and localization.
+
 ---
 
 ## 1. Executive Summary & Market Landscape
