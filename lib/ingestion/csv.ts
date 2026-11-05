@@ -1,26 +1,29 @@
 import { readFileSync } from "node:fs"
-import { mapHeader } from "./headers"
-import type { BomColumn, RawBomRow } from "./types"
+import type { RawBomRow } from "./types"
 
+/** Parses CSV/TSV text into rows keyed by header. Handles quoted fields, "" escapes and a UTF-8 BOM. */
 export function parseCsv(text: string): RawBomRow[] {
-  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter((l) => l.length > 0)
-  if (lines.length < 2) return []
-  const delimiter = lines[0].includes("\t") ? "\t" : ","
-  const headers = splitCsvLine(lines[0], delimiter)
-  const mapped = headers.map(mapHeader)
+  const lines = text
+    .replace(/^﻿/, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split("\n")
+  const headerIndex = lines.findIndex((l) => l.trim().length > 0)
+  if (headerIndex < 0) return []
+  const delimiter = lines[headerIndex].includes("\t") ? "\t" : lines[headerIndex].includes(";") && !lines[headerIndex].includes(",") ? ";" : ","
+  const headers = splitCsvLine(lines[headerIndex], delimiter).map((h) => h.trim())
   const rows: RawBomRow[] = []
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = headerIndex + 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue
     const values = splitCsvLine(lines[i], delimiter)
     const cells: Record<string, string> = {}
+    let any = false
     headers.forEach((h, idx) => {
-      cells[h] = (values[idx] ?? "").trim()
+      const value = (values[idx] ?? "").trim()
+      cells[h] = value
+      if (value) any = true
     })
-    const named: Partial<Record<BomColumn, string>> = {}
-    mapped.forEach((col, idx) => {
-      if (col) named[col] = (values[idx] ?? "").trim()
-    })
-    if (!named.part_name && !named.original_spec) continue
-    rows.push({ sourceLine: i + 1, cells })
+    if (any) rows.push({ sourceLine: i + 1, cells })
   }
   return rows
 }
@@ -36,7 +39,12 @@ function splitCsvLine(line: string, delimiter: string): string[] {
   for (let i = 0; i < line.length; i++) {
     const ch = line[i]
     if (ch === '"') {
-      inQuotes = !inQuotes
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"'
+        i++
+      } else {
+        inQuotes = !inQuotes
+      }
       continue
     }
     if (ch === delimiter && !inQuotes) {

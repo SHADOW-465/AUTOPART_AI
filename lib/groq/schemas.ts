@@ -45,41 +45,6 @@ export const EXTRACT_JSON_SCHEMA = {
   },
 } as const
 
-export const VALIDATE_JSON_SCHEMA = {
-  name: "metallurgy_validation",
-  strict: true,
-  schema: {
-    type: "object",
-    additionalProperties: false,
-    required: [
-      "material_composition_result",
-      "mechanical_properties_result",
-      "dimensional_fit_result",
-      "recommendation",
-      "summary_markdown",
-    ],
-    properties: {
-      material_composition_result: {
-        type: "string",
-        enum: ["EQUIVALENT", "SUPERIOR", "INFERIOR", "INCOMPATIBLE"],
-      },
-      mechanical_properties_result: {
-        type: "string",
-        enum: ["EQUIVALENT", "SUPERIOR", "INFERIOR", "INCOMPATIBLE"],
-      },
-      dimensional_fit_result: {
-        type: "string",
-        enum: ["INTERCHANGEABLE", "REQUIRES_MODIFICATION", "INCOMPATIBLE"],
-      },
-      recommendation: {
-        type: "string",
-        enum: ["SAFE_TO_SWITCH", "REQUIRES_TESTING", "NOT_RECOMMENDED"],
-      },
-      summary_markdown: { type: "string" },
-    },
-  },
-} as const
-
 export const extractItemSchema = z.object({
   line_number: z.number(),
   part_number: z.string(),
@@ -95,15 +60,3 @@ export const extractItemSchema = z.object({
 export const extractResponseSchema = z.object({
   items: z.array(extractItemSchema),
 })
-
-const compositionResult = z.enum(["EQUIVALENT", "SUPERIOR", "INFERIOR", "INCOMPATIBLE"])
-
-export const validationReportSchema = z.object({
-  material_composition_result: compositionResult,
-  mechanical_properties_result: compositionResult,
-  dimensional_fit_result: z.enum(["INTERCHANGEABLE", "REQUIRES_MODIFICATION", "INCOMPATIBLE"]),
-  recommendation: z.enum(["SAFE_TO_SWITCH", "REQUIRES_TESTING", "NOT_RECOMMENDED"]),
-  summary_markdown: z.string(),
-})
-
-export type ValidationReport = z.infer<typeof validationReportSchema>

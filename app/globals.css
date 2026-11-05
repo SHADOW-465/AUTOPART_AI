@@ -29,3 +29,16 @@
     box-shadow: 0 4px 12px rgba(30, 58, 138, 0.08);
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

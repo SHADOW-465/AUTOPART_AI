@@ -2,33 +2,33 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BookOpen, FileText, Home, TrendingUp, Users } from "lucide-react"
+import { BookOpen, Factory, FileSpreadsheet, Home, Mail, Settings, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const baseItems = [
-  { href: "/app", label: "Dashboard", icon: Home, exact: true },
-  { href: "/app/boms", label: "BOMs", icon: FileText, exact: false },
-  { href: "/app/savings", label: "Savings", icon: TrendingUp, exact: false },
-  { href: "/app/settings/standards", label: "Standards", icon: BookOpen, exact: false },
+const items = [
+  { href: "/", label: "Dashboard", icon: Home },
+  { href: "/boms", label: "BOMs", icon: FileSpreadsheet },
+  { href: "/rfqs", label: "RFQs", icon: Mail },
+  { href: "/suppliers", label: "Suppliers", icon: Factory },
+  { href: "/standards", label: "Standards", icon: BookOpen },
+  { href: "/savings", label: "Savings", icon: TrendingUp },
+  { href: "/settings", label: "Settings", icon: Settings },
 ]
 
-const usersItem = { href: "/app/settings/users", label: "Users", icon: Users, exact: false }
-
-export function AppNav({ showUsers, variant }: { showUsers: boolean; variant: "sidebar" | "bar" }) {
+export function AppNav({ variant, openRfqs }: { variant: "sidebar" | "bar"; openRfqs: number }) {
   const pathname = usePathname()
-  const items = showUsers ? [...baseItems, usersItem] : baseItems
 
   return (
     <nav
       aria-label="Main"
       className={cn(
         variant === "sidebar"
-          ? "flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-6"
+          ? "flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
           : "flex gap-1 overflow-x-auto border-b border-brand-border bg-white px-2 py-2",
       )}
     >
       {items.map((item) => {
-        const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+        const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
         const Icon = item.icon
         return (
           <Link
@@ -37,14 +37,17 @@ export function AppNav({ showUsers, variant }: { showUsers: boolean; variant: "s
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex shrink-0 items-center gap-3 rounded-lg text-sm font-medium transition-colors",
-              variant === "sidebar" ? "border-l-4 px-4 py-3" : "px-3 py-2",
-              active
-                ? "border-brand-blue bg-blue-50 text-brand-blue"
-                : "border-transparent text-brand-text-secondary hover:bg-gray-100 hover:text-brand-text-primary",
+              variant === "sidebar" ? "px-3 py-2.5" : "px-3 py-2",
+              active ? "bg-blue-50 text-brand-blue" : "text-brand-text-secondary hover:bg-gray-100 hover:text-brand-text-primary",
             )}
           >
-            <Icon className={cn("h-[18px] w-[18px]", active ? "text-brand-blue" : "text-gray-400")} />
+            <Icon className={cn("h-[18px] w-[18px]", active ? "text-brand-blue" : "text-gray-400")} aria-hidden />
             {item.label}
+            {item.href === "/rfqs" && openRfqs > 0 ? (
+              <span className="ml-auto rounded-full bg-brand-blue px-1.5 text-[10px] font-bold text-white" aria-label={`${openRfqs} open`}>
+                {openRfqs}
+              </span>
+            ) : null}
           </Link>
         )
       })}

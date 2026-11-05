@@ -1,24 +1,15 @@
-import type { Role } from "@/lib/auth/roles"
-
-export type { Role }
-
-export type TierLevel = "TIER_1" | "TIER_2" | "TIER_3" | "JOB_SHOP"
-
-export type BomStatus = "DRAFT" | "EXTRACTING" | "ANALYZED" | "FAILED" | "APPROVED"
-
-export type MatchStatus = "MATCHED" | "NEEDS_REVIEW" | "CUSTOM"
-
 export type StandardBody = "DIN" | "ISO" | "IS" | "JIS" | "ASTM" | "SAE" | "AIS" | "EN"
+export const STANDARD_BODIES: StandardBody[] = ["DIN", "ISO", "IS", "EN", "JIS", "SAE", "ASTM", "AIS"]
 
 export type Equivalence = "EQUIVALENT" | "NEAR" | "NOT_EQUIVALENT"
-
+export type Origin = "SEED" | "PLANT"
+export type BomStatus = "PROCESSING" | "ANALYZED" | "FAILED"
+export type MatchStatus = "MATCHED" | "NEEDS_REVIEW"
 export type AlternativeStatus = "SUGGESTED" | "ACCEPTED" | "REJECTED"
-
-export type MaterialResult = "EQUIVALENT" | "SUPERIOR" | "INFERIOR" | "INCOMPATIBLE"
-
-export type DimensionalFitResult = "INTERCHANGEABLE" | "REQUIRES_MODIFICATION" | "INCOMPATIBLE"
-
-export type ValidationRecommendation = "SAFE_TO_SWITCH" | "REQUIRES_TESTING" | "NOT_RECOMMENDED"
+export type CustomerStatus = "NOT_SUBMITTED" | "SUBMITTED" | "APPROVED" | "REJECTED"
+export const CUSTOMER_STATUSES: CustomerStatus[] = ["NOT_SUBMITTED", "SUBMITTED", "APPROVED", "REJECTED"]
+export type RfqStatus = "DRAFT" | "SENT" | "QUOTED" | "CLOSED"
+export type PriceSource = "SEED" | "MANUAL" | "RFQ"
 
 export type MechanicalFields = {
   property_class?: string
@@ -28,82 +19,17 @@ export type MechanicalFields = {
   thread_fit?: string
 }
 
-export type Tenant = {
-  id: string
-  name: string
-  legal_entity_name: string | null
-  gst_number: string | null
-  tier_level: TierLevel
-  industrial_cluster: string | null
-  is_active: boolean
-  created_at: string
-  updated_at: string
+export type Settings = {
+  company_name: string
+  plant_location: string
+  contact_name: string
+  contact_email: string
+  contact_phone: string
+  gstin: string
+  default_annual_volume: number
 }
 
-export type Profile = {
-  id: string
-  tenant_id: string
-  full_name: string | null
-  role: Role
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
-
-export type Invite = {
-  id: string
-  tenant_id: string
-  email: string
-  role: Role
-  token: string
-  invited_by: string | null
-  expires_at: string
-  accepted_at: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type Bom = {
-  id: string
-  tenant_id: string
-  bom_code: string
-  title: string
-  target_vehicle_platform: string | null
-  currency: string
-  status: BomStatus
-  source_filename: string | null
-  source_storage_path: string | null
-  source_mime: string | null
-  error_message: string | null
-  total_original_cost: number | null
-  total_optimized_cost: number | null
-  total_savings_pct: number | null
-  created_by: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type BomItem = {
-  id: string
-  bom_id: string
-  tenant_id: string
-  line_number: number
-  part_number: string | null
-  part_name: string | null
-  category: string | null
-  original_spec: string | null
-  canonical_spec_key: string | null
-  material_grade: string | null
-  quantity_per_vehicle: number
-  current_unit_cost: number | null
-  current_supplier_name: string | null
-  match_status: MatchStatus
-  extraction_confidence: number | null
-  created_at: string
-  updated_at: string
-}
-
-export type StandardSpecRow = {
+export type StandardSpec = {
   id: string
   body: StandardBody
   code: string
@@ -111,6 +37,8 @@ export type StandardSpecRow = {
   canonical_key: string
   mechanical: MechanicalFields
   notes: string | null
+  source_ref: string | null
+  origin: Origin
   created_at: string
   updated_at: string
 }
@@ -121,28 +49,73 @@ export type StandardEquivalentRow = {
   to_spec_id: string
   equivalence: Equivalence
   notes: string | null
+  source_ref: string | null
+  origin: Origin
   created_at: string
 }
 
 export type Supplier = {
   id: string
-  legal_name: string
-  brand_name: string | null
-  industrial_hub: string
-  state: string
-  iatf_16949_certified: boolean
-  iso_9001_certified: boolean
-  rating: number
-  average_lead_time_days: number
+  name: string
+  industrial_hub: string | null
+  state: string | null
+  contact_name: string | null
+  email: string | null
+  phone: string | null
+  bis_licence_no: string | null
+  iatf_16949: boolean
+  iso_9001: boolean
+  rating: number | null
+  lead_time_days: number | null
+  notes: string | null
+  origin: Origin
   created_at: string
   updated_at: string
 }
 
-export type SupplierCatalogPrice = {
+export type SupplierPrice = {
   id: string
   supplier_id: string
   standard_spec_id: string
   unit_cost: number
+  lead_time_days: number | null
+  valid_until: string | null
+  source: PriceSource
+  updated_at: string
+}
+
+export type Bom = {
+  id: string
+  bom_code: string
+  title: string
+  customer_name: string | null
+  vehicle_platform: string | null
+  annual_volume: number
+  status: BomStatus
+  error_message: string | null
+  source_filename: string | null
+  source_mime: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type BomItem = {
+  id: string
+  bom_id: string
+  line_number: number
+  part_number: string | null
+  part_name: string | null
+  category: string | null
+  original_spec: string | null
+  material: string | null
+  canonical_spec_key: string | null
+  quantity: number
+  current_unit_cost: number | null
+  current_supplier: string | null
+  match_status: MatchStatus
+  from_spec_id: string | null
+  to_spec_id: string | null
+  equivalence: "EQUIVALENT" | "NEAR" | null
   created_at: string
   updated_at: string
 }
@@ -150,44 +123,53 @@ export type SupplierCatalogPrice = {
 export type PartAlternative = {
   id: string
   bom_item_id: string
-  tenant_id: string
-  supplier_id: string | null
   standard_spec_id: string | null
-  rank_order: number
-  alternative_spec: string
+  supplier_id: string | null
   indian_standard_code: string
-  alternative_unit_cost: number | null
-  savings_percentage: number | null
+  unit_cost: number | null
   lead_time_days: number | null
-  is_ais_compliant: boolean
-  confidence_score: number | null
+  rank_order: number
   status: AlternativeStatus
+  customer_status: CustomerStatus
+  customer_ref: string | null
+  customer_notes: string | null
+  decided_at: string | null
+  customer_updated_at: string | null
   created_at: string
   updated_at: string
 }
 
-export type TechnicalValidation = {
+export type Rfq = {
   id: string
-  alternative_id: string
-  tenant_id: string
-  ai_engine: string
-  material_composition_result: MaterialResult
-  mechanical_properties_result: MaterialResult
-  dimensional_fit_result: DimensionalFitResult
-  recommendation: ValidationRecommendation
-  validation_summary_markdown: string
-  report_json: Record<string, unknown>
-  validated_by: string | null
-  validated_at: string
+  rfq_code: string
+  bom_id: string | null
+  bom_item_id: string | null
+  supplier_id: string | null
+  standard_spec_id: string | null
+  spec_code: string
+  part_label: string | null
+  supplier_name: string
+  supplier_email: string | null
+  annual_quantity: number | null
+  target_unit_cost: number | null
+  subject: string
+  body: string
+  status: RfqStatus
+  sent_at: string | null
+  quoted_unit_cost: number | null
+  quoted_lead_time_days: number | null
+  quote_valid_until: string | null
+  quote_notes: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type AuditEvent = {
   id: string
-  tenant_id: string
-  actor_id: string | null
-  action: string
+  bom_id: string | null
   entity_type: string
   entity_id: string | null
-  metadata: Record<string, unknown>
+  action: string
+  summary: string
   created_at: string
 }
