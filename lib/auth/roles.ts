@@ -45,3 +45,13 @@ export function canValidate(role: Role): boolean {
 export function canDraftRfq(role: Role): boolean {
   return matrix[role].rfq
 }
+
+const labels: Record<Role, string> = {
+  plant_admin: "Plant admin",
+  procurement_engineer: "Procurement engineer",
+  quality_manager: "Quality manager",
+}
+
+export function roleLabel(role: string): string {
+  return labels[role as Role] ?? role
+}

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { BomStatusBadge } from "@/components/seion/status-badge"
 import { UploadDropzone } from "@/components/seion/upload-dropzone"
 import { canUpload } from "@/lib/auth/roles"
 import { requireUser } from "@/lib/auth/session"
@@ -29,15 +30,26 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-brand-text-primary">Dashboard</h1>
+        <p className="text-sm text-brand-text-secondary">Savings and compliance from alternatives accepted by this plant.</p>
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Monthly savings" value={formatInr(kpis.monthlySavings)} />
-        <KpiCard label="BOMs processed" value={String(kpis.bomsProcessed)} />
-        <KpiCard label="Compliance rate" value={`${Math.round(kpis.complianceRate * 100)}%`} />
-        <KpiCard label="Accepted alternatives" value={kpis.empty ? "None" : String(acceptedAlts.length)} />
+        <KpiCard label="Per-vehicle savings accepted this month" value={formatInr(kpis.monthlySavings)} />
+        <KpiCard label="BOMs uploaded this month" value={String(kpis.bomsProcessed)} />
+        <KpiCard label="AIS-compliant share of accepted" value={`${Math.round(kpis.complianceRate * 100)}%`} />
+        <KpiCard label="Accepted alternatives (all time)" value={String(acceptedAlts.length)} />
       </div>
       {canUpload(profile.role) ? <UploadDropzone /> : null}
       <div>
-        <h2 className="mb-3 text-lg font-bold text-brand-text-primary">Recent BOMs</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-brand-text-primary">Recent BOMs</h2>
+          {boms.length > recent.length ? (
+            <Link href="/app/boms" className="text-sm font-semibold text-brand-blue">
+              View all
+            </Link>
+          ) : null}
+        </div>
         {recent.length === 0 ? (
           <p className="text-sm text-brand-text-secondary">No BOMs yet.</p>
         ) : (
@@ -46,10 +58,13 @@ export default async function DashboardPage() {
               <li key={bom.id}>
                 <Link
                   href={`/app/boms/${bom.id}`}
-                  className="flex items-center justify-between rounded-xl border border-brand-border bg-white p-4 shadow-bevel"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-brand-border bg-white p-4 shadow-bevel hover:border-brand-blue/40"
                 >
-                  <span className="font-semibold text-brand-text-primary">{bom.bom_code}</span>
-                  <span className="text-sm text-brand-text-secondary">{bom.status}</span>
+                  <span className="min-w-0">
+                    <span className="block font-semibold text-brand-text-primary">{bom.bom_code}</span>
+                    <span className="block truncate text-sm text-brand-text-secondary">{bom.title}</span>
+                  </span>
+                  <BomStatusBadge status={bom.status} />
                 </Link>
               </li>
             ))}

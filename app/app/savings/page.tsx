@@ -37,8 +37,11 @@ export default async function SavingsPage() {
 
   if (kpis.empty) {
     return (
-      <div className="rounded-xl border border-brand-border bg-white p-8 text-center shadow-bevel">
-        <p className="text-sm text-brand-text-secondary">Accept alternatives on a BOM to see savings</p>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-brand-text-primary">Savings</h1>
+        <div className="rounded-xl border border-brand-border bg-white p-8 text-center shadow-bevel">
+          <p className="text-sm text-brand-text-secondary">Accept alternatives on a BOM to see savings here.</p>
+        </div>
       </div>
     )
   }
@@ -47,15 +50,17 @@ export default async function SavingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-brand-text-primary">Savings</h1>
-        <p className="text-sm text-brand-text-secondary">From accepted alternatives this plant.</p>
+        <p className="text-sm text-brand-text-secondary">
+          Per-vehicle savings from alternatives this plant has accepted. Savings are realised only after customer approval.
+        </p>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-brand-border bg-white p-6 shadow-bevel">
-          <p className="text-sm text-brand-text-secondary">Monthly savings</p>
+          <p className="text-sm text-brand-text-secondary">Per-vehicle savings accepted this month</p>
           <p className="mt-2 text-2xl font-bold text-brand-text-primary">{formatInr(kpis.monthlySavings)}</p>
         </div>
         <div className="rounded-xl border border-brand-border bg-white p-6 shadow-bevel">
-          <p className="text-sm text-brand-text-secondary">Compliance rate</p>
+          <p className="text-sm text-brand-text-secondary">AIS-compliant share of accepted</p>
           <p className="mt-2 text-2xl font-bold text-brand-text-primary">{Math.round(kpis.complianceRate * 100)}%</p>
         </div>
       </div>

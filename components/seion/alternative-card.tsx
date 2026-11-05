@@ -6,6 +6,7 @@ import { RfqPanel } from "@/components/seion/rfq-panel"
 import { ValidationPanel } from "@/components/seion/validation-panel"
 import type { PartAlternative, TechnicalValidation } from "@/lib/db/types"
 import { formatInr } from "@/components/seion/bom-table"
+import { AlternativeStatusBadge } from "@/components/seion/status-badge"
 
 export function AlternativeCard({
   alternative,
@@ -41,9 +42,7 @@ export function AlternativeCard({
           <p className="text-sm font-semibold text-brand-text-primary">{alternative.alternative_spec}</p>
           <p className="text-xs text-brand-text-secondary">IS {alternative.indian_standard_code}</p>
         </div>
-        <span className="rounded bg-gray-50 px-2 py-0.5 text-[10px] font-bold uppercase text-brand-text-secondary">
-          {alternative.status}
-        </span>
+        <AlternativeStatusBadge status={alternative.status} />
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-brand-text-secondary">
         <div>
@@ -64,7 +63,9 @@ export function AlternativeCard({
         </div>
         <div>
           <dt>AIS</dt>
-          <dd>{alternative.is_ais_compliant ? "Compliant" : "No"}</dd>
+          <dd className={alternative.is_ais_compliant ? "text-brand-green" : "text-brand-red"}>
+            {alternative.is_ais_compliant ? "Compliant" : "Not compliant"}
+          </dd>
         </div>
       </dl>
       {canAccept ? (
@@ -86,6 +87,12 @@ export function AlternativeCard({
             Reject
           </button>
         </div>
+      ) : null}
+      {alternative.status === "ACCEPTED" ? (
+        <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800">
+          Accepted by the plant. Changing material or source on an approved part usually needs customer approval
+          (PPAP) before production use.
+        </p>
       ) : null}
       {error ? <p className="mt-2 text-xs font-medium text-brand-red">{error}</p> : null}
       <ValidationPanel

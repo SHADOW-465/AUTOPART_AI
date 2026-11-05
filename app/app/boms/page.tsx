@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { RetryBomButton } from "@/components/seion/retry-bom-button"
+import { BomStatusBadge } from "@/components/seion/status-badge"
 import { requireUser } from "@/lib/auth/session"
-import type { Bom, BomStatus } from "@/lib/db/types"
+import type { Bom } from "@/lib/db/types"
 import { createServerClient } from "@/lib/supabase/server"
 
 export default async function BomsPage() {
@@ -19,7 +20,7 @@ export default async function BomsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-brand-text-primary">BOMs</h1>
-        <p className="text-sm text-brand-text-secondary">Newest first for this plant.</p>
+        <p className="text-sm text-brand-text-secondary">All BOMs uploaded by this plant, newest first.</p>
       </div>
       {boms.length === 0 ? (
         <div className="rounded-xl border border-brand-border bg-white p-8 text-center shadow-bevel">
@@ -37,7 +38,7 @@ export default async function BomsPage() {
                   <p className="font-semibold text-brand-text-primary">{bom.bom_code}</p>
                   <p className="truncate text-sm text-brand-text-secondary">{bom.title}</p>
                 </Link>
-                <StatusBadge status={bom.status} />
+                <BomStatusBadge status={bom.status} />
               </div>
               {bom.status === "FAILED" ? (
                 <div className="mt-2">
@@ -56,17 +57,4 @@ export default async function BomsPage() {
 function snippet(message: string | null): string {
   if (!message) return "Processing failed"
   return message.length > 160 ? `${message.slice(0, 157)}…` : message
-}
-
-function StatusBadge({ status }: { status: BomStatus }) {
-  const styles: Record<BomStatus, string> = {
-    DRAFT: "border-brand-border bg-gray-50 text-brand-text-secondary",
-    EXTRACTING: "border-blue-100 bg-blue-50 text-brand-blue",
-    ANALYZED: "border-green-100 bg-green-50 text-brand-green",
-    FAILED: "border-red-100 bg-red-50 text-brand-red",
-    APPROVED: "border-green-100 bg-green-50 text-brand-green",
-  }
-  return (
-    <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${styles[status]}`}>{status}</span>
-  )
 }

@@ -1,99 +1,70 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
+import { ArrowLeft, Download } from "lucide-react"
 import { BomDetail } from "@/components/seion/bom-detail"
 import { formatInr } from "@/components/seion/bom-table"
+import { BomStatusBadge } from "@/components/seion/status-badge"
 import { canAccept, canDraftRfq, canValidate } from "@/lib/auth/roles"
 import { requireUser } from "@/lib/auth/session"
-import type { Bom, BomItem, PartAlternative, TechnicalValidation } from "@/lib/db/types"
+import { loadBomDetail } from "@/lib/boms/load"
 import { createServerClient } from "@/lib/supabase/server"
 
 export default async function BomDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { profile } = await requireUser()
   const supabase = await createServerClient()
+  const detail = await loadBomDetail(supabase, profile.tenant_id, id)
+  if (!detail) notFound()
 
-  const { data: bom } = await supabase
-    .from("boms")
-    .select("*")
-    .eq("id", id)
-    .eq("tenant_id", profile.tenant_id)
-    .maybeSingle()
-
-  if (!bom) notFound()
-  const record = bom as Bom
-
-  const { data: items } = await supabase
-    .from("bom_items")
-    .select("*")
-    .eq("bom_id", id)
-    .eq("tenant_id", profile.tenant_id)
-    .order("line_number", { ascending: true })
-
-  const itemRows = (items ?? []) as BomItem[]
-  const itemIds = itemRows.map((row) => row.id)
-
-  let alternatives: PartAlternative[] = []
-  if (itemIds.length > 0) {
-    const { data: alts } = await supabase
-      .from("part_alternatives")
-      .select("*")
-      .eq("tenant_id", profile.tenant_id)
-      .in("bom_item_id", itemIds)
-      .order("rank_order", { ascending: true })
-    alternatives = (alts ?? []) as PartAlternative[]
-  }
-
-  const validationsByAlt: Record<string, TechnicalValidation> = {}
-  const altIds = alternatives.map((a) => a.id)
-  if (altIds.length > 0) {
-    const { data: vals } = await supabase
-      .from("technical_validations")
-      .select("*")
-      .eq("tenant_id", profile.tenant_id)
-      .in("alternative_id", altIds)
-      .order("validated_at", { ascending: false })
-    for (const row of (vals ?? []) as TechnicalValidation[]) {
-      if (!validationsByAlt[row.alternative_id]) {
-        validationsByAlt[row.alternative_id] = row
-      }
-    }
-  }
+  const { bom, items, alternatives, validationsByAlt } = detail
+  const needsReview = items.filter((item) => item.match_status === "NEEDS_REVIEW").length
 
   return (
     <div className="space-y-6">
+      <Link href="/app/boms" className="inline-flex items-center gap-1 text-sm font-medium text-brand-text-secondary hover:text-brand-text-primary">
+        <ArrowLeft className="h-4 w-4" /> All BOMs
+      </Link>
       <header className="rounded-xl border border-brand-border bg-white p-6 shadow-bevel">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-brand-text-secondary">
-              {record.bom_code}
-            </p>
-            <h1 className="text-2xl font-bold text-brand-text-primary">{record.title}</h1>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wide text-brand-text-secondary">{bom.bom_code}</p>
+            <h1 className="text-2xl font-bold text-brand-text-primary">{bom.title}</h1>
+            {bom.source_filename ? (
+              <p className="mt-1 truncate text-xs text-brand-text-secondary">Source: {bom.source_filename}</p>
+            ) : null}
           </div>
-          <span className="rounded bg-gray-50 px-2 py-1 text-xs font-bold uppercase text-brand-text-secondary">
-            {record.status}
-          </span>
+          <div className="flex items-center gap-3">
+            <BomStatusBadge status={bom.status} />
+            {items.length > 0 ? (
+              <a
+                href={`/app/boms/${bom.id}/export`}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-brand-border px-3 py-1.5 text-sm font-semibold text-brand-text-primary hover:bg-gray-50"
+              >
+                <Download className="h-4 w-4" /> Export proposal (CSV)
+              </a>
+            ) : null}
+          </div>
         </div>
-        <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <dt className="text-xs text-brand-text-secondary">Original</dt>
-            <dd className="text-lg font-semibold">{formatMoney(record.total_original_cost)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-brand-text-secondary">Optimized</dt>
-            <dd className="text-lg font-semibold">{formatMoney(record.total_optimized_cost)}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-brand-text-secondary">Savings</dt>
-            <dd className="text-lg font-semibold text-brand-green">
-              {record.total_savings_pct == null ? "—" : `${record.total_savings_pct.toFixed(1)}%`}
-            </dd>
-          </div>
+        <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Stat label="Line items" value={String(items.length)} />
+          <Stat label="Needs review" value={String(needsReview)} />
+          <Stat label="Original cost / vehicle" value={formatMoney(bom.total_original_cost)} />
+          <Stat
+            label="With accepted alternatives"
+            value={
+              bom.total_optimized_cost == null
+                ? "—"
+                : `${formatInr(bom.total_optimized_cost)}${bom.total_savings_pct == null ? "" : ` (−${bom.total_savings_pct.toFixed(1)}%)`}`
+            }
+            highlight
+          />
         </dl>
-        {record.status === "FAILED" && record.error_message ? (
-          <p className="mt-3 text-sm text-brand-red">{record.error_message}</p>
+        {bom.status === "FAILED" && bom.error_message ? (
+          <p className="mt-3 text-sm text-brand-red">{bom.error_message}</p>
         ) : null}
       </header>
       <BomDetail
-        items={itemRows}
+        items={items}
         alternatives={alternatives}
         validationsByAlt={validationsByAlt}
         canAccept={canAccept(profile.role)}
@@ -104,7 +75,17 @@ export default async function BomDetailPage({ params }: { params: Promise<{ id: 
   )
 }
 
+function Stat({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div>
+      <dt className="text-xs text-brand-text-secondary">{label}</dt>
+      <dd className={highlight ? "text-lg font-semibold text-brand-green" : "text-lg font-semibold text-brand-text-primary"}>
+        {value}
+      </dd>
+    </div>
+  )
+}
+
 function formatMoney(value: number | null): string {
-  if (value == null) return "—"
-  return formatInr(value)
+  return value == null ? "—" : formatInr(value)
 }

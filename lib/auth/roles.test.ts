@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { canAccept, canDraftRfq, canInvite, canUpload, canValidate, type Role } from "./roles"
+import { canAccept, canDraftRfq, canInvite, canUpload, canValidate, roleLabel, type Role } from "./roles"
 
 const roles: Role[] = ["plant_admin", "procurement_engineer", "quality_manager"]
 
@@ -18,5 +18,12 @@ describe("role matrix", () => {
   })
   it("rfq", () => {
     expect(roles.map(canDraftRfq)).toEqual([true, true, false])
+  })
+})
+
+describe("roleLabel", () => {
+  it("humanizes known roles and passes unknown ones through", () => {
+    expect(roles.map(roleLabel)).toEqual(["Plant admin", "Procurement engineer", "Quality manager"])
+    expect(roleLabel("auditor")).toBe("auditor")
   })
 })

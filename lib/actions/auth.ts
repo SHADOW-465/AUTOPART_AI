@@ -222,3 +222,9 @@ async function findAuthUserIdByEmail(
   }
   return undefined
 }
+
+export async function signOutAction(): Promise<void> {
+  const supabase = await createServerClient()
+  await supabase.auth.signOut()
+  redirect("/login")
+}

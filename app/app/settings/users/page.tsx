@@ -1,13 +1,7 @@
 import { InviteForm } from "@/components/seion/invite-form"
+import { roleLabel } from "@/lib/auth/roles"
 import { requireRole } from "@/lib/auth/session"
 import { createServerClient } from "@/lib/supabase/server"
-
-function roleLabel(role: string) {
-  if (role === "plant_admin") return "Plant admin"
-  if (role === "procurement_engineer") return "Procurement engineer"
-  if (role === "quality_manager") return "Quality manager"
-  return role
-}
 
 export default async function UsersSettingsPage() {
   const { profile } = await requireRole(["plant_admin"])

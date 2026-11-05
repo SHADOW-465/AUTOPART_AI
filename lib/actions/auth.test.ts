@@ -6,6 +6,7 @@ const redirect = vi.hoisted(() =>
   }),
 )
 const signInWithPassword = vi.hoisted(() => vi.fn())
+const signOut = vi.hoisted(() => vi.fn())
 const createUser = vi.hoisted(() => vi.fn())
 const deleteUser = vi.hoisted(() => vi.fn())
 const updateUserById = vi.hoisted(() => vi.fn())
@@ -31,7 +32,7 @@ vi.mock("@/lib/auth/session", () => ({
   requireUser: vi.fn(),
 }))
 
-import { acceptInviteAction, loginAction } from "./auth"
+import { acceptInviteAction, loginAction, signOutAction } from "./auth"
 import { INVITE_INVALID_MESSAGE } from "./invite-messages"
 
 const openInvite = {
@@ -49,7 +50,7 @@ const openInvite = {
 
 function mockClients() {
   createServerClient.mockResolvedValue({
-    auth: { signInWithPassword },
+    auth: { signInWithPassword, signOut },
   })
   createAdminClient.mockReturnValue({
     auth: { admin: { createUser, deleteUser, updateUserById, listUsers } },
@@ -80,6 +81,19 @@ function mockClients() {
     },
   })
 }
+
+describe("signOutAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockClients()
+  })
+
+  it("ends the Supabase session and redirects to /login", async () => {
+    signOut.mockResolvedValue({ error: null })
+    await expect(signOutAction()).rejects.toThrow("NEXT_REDIRECT:/login")
+    expect(signOut).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe("loginAction", () => {
   beforeEach(() => {

@@ -2,12 +2,14 @@
 
 import { useRef, useState } from "react"
 import { uploadBomAction } from "@/lib/actions/boms"
-import { Spinner } from "@/components/ui/spinner"
+import { Loader2, Upload } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export function UploadDropzone() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dragging, setDragging] = useState(false)
 
   async function submit(file: File) {
     setPending(true)
@@ -27,7 +29,12 @@ export function UploadDropzone() {
   }
 
   return (
-    <div className="rounded-xl border border-dashed border-brand-border bg-white p-8 shadow-bevel">
+    <div
+      className={cn(
+        "rounded-xl border-2 border-dashed bg-white p-6 shadow-bevel transition-colors",
+        dragging ? "border-brand-blue bg-blue-50" : "border-brand-border",
+      )}
+    >
       <input
         ref={inputRef}
         type="file"
@@ -47,9 +54,12 @@ export function UploadDropzone() {
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault()
+          setDragging(true)
         }}
+        onDragLeave={() => setDragging(false)}
         onDrop={(e) => {
           e.preventDefault()
+          setDragging(false)
           const file = e.dataTransfer.files?.[0]
           if (file) void submit(file)
         }}
@@ -57,12 +67,14 @@ export function UploadDropzone() {
       >
         {pending ? (
           <>
-            <Spinner className="size-6 text-brand-blue" />
-            <p className="text-sm font-medium text-brand-text-primary">Extracting parts…</p>
+            <Loader2 role="status" aria-label="Processing" className="size-6 animate-spin text-brand-blue" />
+            <p className="text-sm font-medium text-brand-text-primary">Extracting and matching parts…</p>
+            <p className="text-xs text-brand-text-secondary">Large BOMs can take a minute. Keep this tab open.</p>
           </>
         ) : (
           <>
-            <p className="text-sm font-semibold text-brand-text-primary">Drop a BOM file here</p>
+            <Upload className="size-6 text-brand-blue" />
+            <p className="text-sm font-semibold text-brand-text-primary">Drop a BOM file here, or click to choose</p>
             <p className="text-xs text-brand-text-secondary">xlsx, csv, or PDF. Max 10MB.</p>
           </>
         )}
