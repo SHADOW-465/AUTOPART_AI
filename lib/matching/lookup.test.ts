@@ -28,14 +28,13 @@ describe("matchEquivalent", () => {
   it("maps DIN 912 to IS 1367 Part 3", () => {
     const key = canonicalizeSpec("DIN 912 M6x20 8.8")
     const result = matchEquivalent(key, catalog)
-    expect(result.status).toBe("MATCHED")
-    expect(result.toSpec?.code).toBe("IS 1367 Part 3")
+    if (result.status !== "MATCHED") throw new Error(`expected MATCHED, got ${result.status}`)
+    expect(result.toSpec.code).toBe("IS 1367 Part 3")
     expect(result.equivalence).toBe("EQUIVALENT")
   })
 
   it("flags unknown specs", () => {
     const result = matchEquivalent(canonicalizeSpec("CUSTOM BRACKET 400MPA"), catalog)
-    expect(result.status).toBe("NEEDS_REVIEW")
-    expect(result.toSpec).toBeUndefined()
+    expect(result).toEqual({ status: "NEEDS_REVIEW" })
   })
 })

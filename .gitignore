@@ -9,3 +9,4 @@ node_modules
 .understand-anything
 *.log
 .DS_Store
+*.tsbuildinfo

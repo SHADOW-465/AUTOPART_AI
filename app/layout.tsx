@@ -1,7 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, JetBrains_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
+import { Inter } from "next/font/google"
 import "./globals.css"
 
 const inter = Inter({
@@ -9,17 +8,10 @@ const inter = Inter({
   variable: "--font-inter",
 })
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-})
-
 export const metadata: Metadata = {
-  title: "SEION AutoPart AI | Automotive BOM Optimization",
+  title: "SEION AutoPart AI",
   description:
-    "The ultimate AI-powered BOM alternative suggestion engine for Tier-2 automotive suppliers. Find cheaper, compliant Indian Standard alternatives in 60 seconds.",
-  keywords: ["automotive", "BOM", "procurement", "manufacturing", "AI", "cost optimization", "Indian Standards"],
-    generator: 'v0.app'
+    "Map foreign-spec BOM lines (DIN, ISO, SAE) to BIS / Indian Standard equivalents and prepare localization proposals.",
 }
 
 export default function RootLayout({
@@ -29,10 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        {children}
-        <Analytics />
-      </body>
+      <body className={`${inter.variable} font-sans antialiased`}>{children}</body>
     </html>
   )
 }
